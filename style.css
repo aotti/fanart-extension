@@ -1,0 +1,109 @@
+/* Pengaturan dasar: Dark Mode & Font 12px */
+body {
+  width: 620px;
+  margin: 0;
+  padding: 8px; /* Padding luar diperkecil */
+  font-family: sans-serif;
+  font-size: 12px; /* Ukuran teks diubah menjadi 12px secara global */
+  background-color: #121212; /* Warna background utama gelap */
+  color: #e0e0e0; /* Warna teks abu-abu terang / putih kusam */
+  box-sizing: border-box;
+}
+
+/* Kotak utama */
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 180px; /* Tinggi disesuaikan agar pas dengan font kecil */
+  border: 2px solid #555; /* Border dibuat lebih tipis (2px) dan berwarna abu-abu */
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+}
+
+/* --- TAB HEADER --- */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #555;
+}
+
+.tab-btn {
+  flex: 1; /* Membuat ukuran ketiga tab merata/proporsional */
+  background-color: #2a2a2a;
+  color: #a0a0a0;
+  border: none;
+  border-right: 2px solid #555;
+  padding: 6px 0; /* Tinggi padding disesuaikan dengan teks 12px */
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s; /* Animasi halus saat di-hover */
+}
+
+/* Menghilangkan border kanan pada tab paling ujung */
+.tab-btn:last-child {
+  border-right: none;
+}
+
+.tab-btn:hover {
+  background-color: #333;
+  color: #ffffff;
+}
+
+/* Gaya tab yang sedang terbuka */
+.tab-btn.active {
+  background-color: #1e1e1e; /* Sama dengan warna konten */
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* --- KONTEN UTAMA --- */
+.content {
+  flex-grow: 1;
+  padding: 12px; /* Jarak teks ke tepi konten */
+  font-size: 12px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* --- FOOTER --- */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 2px solid #555;
+  background-color: #2a2a2a;
+}
+
+.footer-btn {
+  flex: 1;
+  background-color: transparent;
+  color: #e0e0e0;
+  border: none;
+  padding: 6px 12px; /* Ukuran tombol disesuaikan dengan font 12px */
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.footer-btn:hover {
+  background-color: #444;
+  color: #ffffff;
+}
+
+/* Menjaga bentuk sesuai gambar referensi awal */
+.footer .footer-btn:first-child {
+  border-right: 2px solid #555;
+}
+
+.footer-spacer {
+  flex-grow: 1;
+  background-color: #1e1e1e; /* Warna spacer dibuat sama dengan background konten */
+}
+
+.footer .footer-btn:last-child {
+  border-left: 2px solid #555;
+}

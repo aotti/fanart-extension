@@ -1,0 +1,20 @@
+.fanart-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.fanart-action {
+    display: flex;
+    gap: 4px;
+}
+
+.fanart-action > a {
+    color: aquamarine;
+}
+
+.fanart-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

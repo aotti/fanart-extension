@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekstensi Fanart</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="fanart.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Bagian Tab Header -->
+        <div class="tabs">
+            <button class="tab-btn active" data-target="tab1">Nice</button>
+            <button class="tab-btn" data-target="tab2">Wow</button>
+            <button class="tab-btn" data-target="tab3">YOOO</button>
+        </div>
+
+        <!-- Bagian Konten Utama -->
+        <div class="content">
+            <div id="tab1" class="tab-content active">
+                <!-- image container -->
+                <div class="fanart-container"></div>
+            </div>
+            <div id="tab2" class="tab-content">
+                <div class="fanart-container"></div>
+            </div>
+            <div id="tab3" class="tab-content">
+                <div class="fanart-container"></div>
+            </div>
+        </div>
+
+        <!-- Bagian Footer -->
+        <div class="footer">
+            <button id="getFromRedis" class="footer-btn">get from redis</button>
+            <div class="footer-spacer"></div>
+            <button id="updateToRedis" class="footer-btn">update to redis</button>
+        </div>
+    </div>
+
+    <!-- Memuat script untuk logika tab -->
+    <script src="js/actions.js"></script>
+    <script src="js/popup.js"></script>
+</body>
+</html>
