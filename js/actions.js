@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // load fanart list
     await createFanartList()
+    // check fanart token
+    checkFanartToken()
 
     // ANCHOR ONCLICK EVENT
     // ambil semua anchor element
@@ -16,8 +18,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             openLinkNewTab(rawUrl)
         }
     }
+
+    // set fanart token
+    const fanartTokenButton = document.querySelector('#setFanartToken')
+    fanartTokenButton.onclick = () => setFanartToken()
     
-    // --- Kode logika perpindahan tab Anda yang sebelumnya tetap ditaruh di bawah sini ---
+    // get fanart from redis
+    const getFanartRedisButton = document.querySelector('#getFromRedis')
+    getFanartRedisButton.onclick = event => getFromRedisCommand(event)
+    
+    // update fanart to redis
+    const updateFanartRedisButton = document.querySelector('#updateToRedis')
+    updateFanartRedisButton.onclick = event => updateToRedisCommand(event)
 });
 
 // Fungsi universal untuk membuka tab baru
@@ -58,6 +70,7 @@ function createFanartItem(container, fanartList) {
         // image 
         const fanartImg = document.createElement('img')
         fanartImg.src = fanart.img
+        // fanartImg.height = 120
 
         // action div
         const fanartActionDiv = document.createElement('div')
@@ -94,4 +107,67 @@ async function getFromStorage(key) {
     // this shit return object even if the storage is empty
     const data = await chrome.storage.local.get([key])
     return Object.keys(data).length > 0 ? data[key] : null
+}
+
+function saveToStorage(key, value) {
+    chrome.storage.local.set({ [key]: value }, () => {
+        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
+        console.log(`Gambar berhasil disimpan! (${time})`);
+    });
+}
+
+function setFanartToken() {
+    const token = prompt('input fanart token:')
+
+    chrome.storage.local.set({ fanartToken: token }, () => {
+        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
+        console.log(`Token berhasil disimpan! (${time})`);
+    });
+}
+
+function checkFanartToken() {
+    getFromStorage('fanartToken').then(res => {
+        if(!res) return
+        const fanartTokenButton = document.querySelector('#setFanartToken')
+        fanartTokenButton.textContent = 'set fanart token ✅'
+    })
+}
+
+function getFromRedisCommand(event) {
+    chrome.runtime.sendMessage(
+        {action: 'getFanartFromRedis'},
+        res => {
+            if(res && res.status === 200) {
+                // parse fanart data
+                const wholeFanartList = JSON.parse(res.data)
+                
+                // set fanart list
+                for(let [key, value] of Object.entries(wholeFanartList)) {
+                    saveToStorage(key, value)
+                }
+
+                // response status
+                event.target.textContent += ' ✅'
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 2000);
+            } else {
+                event.target.textContent += ' ❌'
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 2000);
+            }
+        }
+    )
+}
+
+function updateToRedisCommand(event) {
+    chrome.runtime.sendMessage(
+        {action: 'updateFanartToRedis'},
+        res => {
+            if(res && res.status === 200) {
+                event.target.textContent += ' ✅'
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 2000);
+            } else {
+                event.target.textContent += ' ❌'
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 2000);
+            }
+        }
+    )
 }

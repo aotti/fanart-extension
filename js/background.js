@@ -52,6 +52,54 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 });
 
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
+    const fanartToken = await getFromStorage('fanartToken')
+    const fanartQueryParam = `?fanart_token=${fanartToken}`
+    // check action
+    if(request.action == 'getFanartFromRedis') {
+        // get fanart from redis
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {method: 'GET'})).json()
+        
+        // sendResponse for chrome
+        sendResponse({
+            status: fanartFetch.status, 
+            message: fanartFetch.message, 
+            data: fanartFetch.data
+        })
+        // return for firefox
+        return {
+            status: fanartFetch.status, 
+            message: fanartFetch.message, 
+            data: fanartFetch.data
+        }
+    } else if(request.action == 'updateFanartToRedis') {
+        // update fanart to redis
+        const saveFanartNice = await getFromStorage('saveFanartNice')
+        const saveFanartWow = await getFromStorage('saveFanartWow')
+        const saveFanartYooo = await getFromStorage('saveFanartYooo')
+        const wholeFanartList = {saveFanartNice, saveFanartWow, saveFanartYooo}
+
+        const fanartBody = {fanart_list: JSON.stringify(wholeFanartList)}
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {
+            method: 'PUT', 
+            body: JSON.stringify(fanartBody)
+        })).json()
+        
+        sendResponse({
+            status: fanartFetch.status, 
+            message: fanartFetch.message, 
+            data: fanartFetch.data
+        })
+        return {
+            status: fanartFetch.status, 
+            message: fanartFetch.message, 
+            data: fanartFetch.data
+        }
+    }
+    return true
+})
+
 // Contoh fungsi memproses gambar di background script (Bebas CORS)
 async function convertImageToBase64(url) {
     try {
@@ -91,12 +139,10 @@ async function updateFanartList(props) {
     const {key, postUrl, base64} = props
 
     const fanartData = await getFromStorage(key)
-    console.log(fanartData);
-    
     if(fanartData) {
         // data sudah ada, maka update list
         const fanartList = JSON.parse(fanartData)
-        fanartList.push({url: postUrl, img: base64})
+        fanartList.unshift({url: postUrl, img: base64})
         // hapus data duplikat
         const filterFanartList = fanartList.filter((v,i,arr) => i === arr.findIndex(w => v.url === w.url))
         saveToStorage(key, JSON.stringify(filterFanartList))
@@ -106,3 +152,4 @@ async function updateFanartList(props) {
         saveToStorage(key, JSON.stringify(fanartList))
     }
 }
+
