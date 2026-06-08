@@ -188,12 +188,21 @@ function getFromRedisCommand(event) {
                     }
                 }
 
-                // response status
+                // response success
+                event.target.classList.add('fanart-fetch-success')
                 event.target.textContent += ` (${res.currentPage}) ✅`
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 3000);
+                setTimeout(() => {
+                    event.target.classList.remove('fanart-fetch-success')
+                    event.target.textContent = event.target.textContent.replace(' ✅', '')
+                }, 3000);
             } else {
+                // response error
+                event.target.classList.add('fanart-fetch-failed')
                 event.target.textContent += ` (${res.currentPage}) ❌`
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 3000);
+                setTimeout(() => {
+                    event.target.classList.remove('fanart-fetch-failed')
+                    event.target.textContent = event.target.textContent.replace(' ❌', '')
+                }, 3000);
             }
         }
     )
@@ -204,11 +213,21 @@ function updateToRedisCommand(event) {
         {action: 'updateFanartToRedis'},
         res => {
             if(res && res.status === 200) {
+                // response success
+                event.target.classList.add('fanart-fetch-success')
                 event.target.textContent += ' ✅'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 3000);
+                setTimeout(() => {
+                    event.target.classList.remove('fanart-fetch-success')
+                    event.target.textContent = event.target.textContent.replace(' ✅', '')
+                }, 3000);
             } else {
+                // response error
+                event.target.classList.add('fanart-fetch-failed')
                 event.target.textContent += ' ❌'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 3000);
+                setTimeout(() => {
+                    event.target.classList.remove('fanart-fetch-failed')
+                    event.target.textContent = event.target.textContent.replace(' ❌', '')
+                }, 3000);
             }
         }
     )

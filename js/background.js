@@ -5,22 +5,19 @@ chrome.runtime.onInstalled.addListener(() => {
         title: "Save Fanart - Nice",        // Teks yang akan muncul di menu klik kanan
         contexts: ["image"]                 // PENTING: Opsi ini HANYA muncul saat pengguna klik kanan pada GAMBAR
     });
-});
-
-chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "saveFanartWow",               // ID unik untuk menu ini
         title: "Save Fanart - Wow",        // Teks yang akan muncul di menu klik kanan
-        contexts: ["image"]                 // PENTING: Opsi ini HANYA muncul saat pengguna klik kanan pada GAMBAR
+        contexts: ["image"]                // PENTING: Opsi ini HANYA muncul saat pengguna klik kanan pada GAMBAR
     });
-});
-
-chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "saveFanartYooo",               // ID unik untuk menu ini
         title: "Save Fanart - YOOO",        // Teks yang akan muncul di menu klik kanan
         contexts: ["image"]                 // PENTING: Opsi ini HANYA muncul saat pengguna klik kanan pada GAMBAR
     });
+
+    // set update timestamp for 1st time
+    saveToStorage('updateTimestamp', Date.now().toString())
 });
 
 // 2. Mendengarkan aksi ketika menu "Save Fanart" diklik oleh pengguna
@@ -68,20 +65,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         // update infinite scroll params
         if(fanartFetch.status === 200) currentPage += 1
         
-        // sendResponse for chrome
-        sendResponse({
-            status: fanartFetch.status, 
-            message: fanartFetch.message, 
-            data: fanartFetch.data,
-            currentPage,
-        })
-        // return for firefox
-        return {
-            status: fanartFetch.status, 
-            message: fanartFetch.message, 
-            data: fanartFetch.data,
-            currentPage,
-        }
+        return responseFromBack({...fanartFetch, currentPage}, sendResponse)
     } else if(request.action == 'updateFanartToRedis') {
         // update fanart to redis
         // get all new scrapped fanart list
@@ -89,29 +73,42 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
         // remove the array+object closures on start+end
         const wholeFanartList = {
-            saveFanartNice: saveFanartNice.replace('[{', '').replace('}]', ''), 
-            saveFanartWow: saveFanartWow.replace('[{', '').replace('}]', ''), 
-            saveFanartYooo: saveFanartYooo.replace('[{', '').replace('}]', ''),
+            saveFanartNice: saveFanartNice?.replace('[{', '').replace('}]', ''), 
+            saveFanartWow: saveFanartWow?.replace('[{', '').replace('}]', ''), 
+            saveFanartYooo: saveFanartYooo?.replace('[{', '').replace('}]', ''),
         }
 
         const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {
             method: 'PUT', 
             body: JSON.stringify(wholeFanartList)
         })).json()
+
+        // set new update timestamp
+        if(fanartFetch.status === 200) 
+            saveToStorage('updateTimestamp', Date.now().toString())
         
-        sendResponse({
-            status: fanartFetch.status, 
-            message: fanartFetch.message, 
-            data: fanartFetch.data,
-        })
-        return {
-            status: fanartFetch.status, 
-            message: fanartFetch.message, 
-            data: fanartFetch.data,
-        }
+        return responseFromBack(fanartFetch, sendResponse)
     }
     return true
 })
+
+function responseFromBack(data, sendResponse) {
+    // sendResponse for chrome
+    sendResponse({
+        status: data.status, 
+        message: data.message, 
+        data: data.data,
+        currentPage,
+    })
+
+    // basic return for firefox
+    return {
+        status: data.status, 
+        message: data.message, 
+        data: data.data,
+        currentPage,
+    }
+}
 
 // Contoh fungsi memproses gambar di background script (Bebas CORS)
 async function convertImageToBase64(url) {
@@ -154,31 +151,39 @@ async function getScrappedFanartList() {
     const saveFanartYooo = await getFromStorage('saveFanartYooo')
     
     // parse
-    const parsedFanartNice = JSON.parse(saveFanartNice)
-    const parsedFanartWow = JSON.parse(saveFanartWow)
-    const parsedFanartYooo = JSON.parse(saveFanartYooo)
+    const parsedFanartNice = saveFanartNice ? JSON.parse(saveFanartNice) : []
+    const parsedFanartWow = saveFanartWow ? JSON.parse(saveFanartWow) : []
+    const parsedFanartYooo = saveFanartYooo ? JSON.parse(saveFanartYooo) : []
 
     // find new scrapped fanart
-    const latestUpdateTimestamp = await getFromStorage('latestUpdate')
+    const updateTimestamp = await getFromStorage('updateTimestamp')
     const scrappedFanartNice = []
     const scrappedFanartWow = []
     const scrappedFanartYooo = []
 
-    for(let fanart of parsedFanartNice) {
-        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartNice.push(fanart)
+    for(let i=0; i<parsedFanartNice.length; i++) {
+        const fanart = parsedFanartNice[i]
+        if(+fanart.timestamp > +updateTimestamp) scrappedFanartNice.push(fanart)
     }
-    for(let fanart of parsedFanartWow) {
-        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartWow.push(fanart)
+    for(let i=0; i<parsedFanartWow.length; i++) {
+        const fanart = parsedFanartWow[i]
+        if(+fanart.timestamp > +updateTimestamp) scrappedFanartWow.push(fanart)
     }
-    for(let fanart of parsedFanartYooo) {
-        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartYooo.push(fanart)
+    for(let i=0; i<parsedFanartYooo.length; i++) {
+        const fanart = parsedFanartYooo[i]
+        if(+fanart.timestamp > +updateTimestamp) scrappedFanartYooo.push(fanart)
     }
+
+    // check if all empty
+    const stringFanartNice = JSON.stringify(scrappedFanartNice)
+    const stringFanartWow = JSON.stringify(scrappedFanartWow)
+    const stringFanartYooo = JSON.stringify(scrappedFanartYooo)
 
     // return data
     return {
-        saveFanartNice: JSON.stringify(scrappedFanartNice), 
-        saveFanartWow: JSON.stringify(scrappedFanartNice), 
-        saveFanartYooo: JSON.stringify(scrappedFanartYooo),
+        saveFanartNice: stringFanartNice == `[]` ? null : stringFanartNice, 
+        saveFanartWow: stringFanartWow == `[]` ? null : stringFanartWow, 
+        saveFanartYooo: stringFanartYooo == `[]` ? null : stringFanartYooo,
     }
 }
 
