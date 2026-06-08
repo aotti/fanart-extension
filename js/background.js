@@ -84,10 +84,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
     } else if(request.action == 'updateFanartToRedis') {
         // update fanart to redis
-        // get all fanart
-        const saveFanartNice = await getFromStorage('saveFanartNice')
-        const saveFanartWow = await getFromStorage('saveFanartWow')
-        const saveFanartYooo = await getFromStorage('saveFanartYooo')
+        // get all new scrapped fanart list
+        const {saveFanartNice, saveFanartWow, saveFanartYooo} = await getScrappedFanartList()
+
         // remove the array+object closures on start+end
         const wholeFanartList = {
             saveFanartNice: saveFanartNice.replace('[{', '').replace('}]', ''), 
@@ -147,6 +146,40 @@ function saveToStorage(key, value) {
         const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
         console.log(`Gambar berhasil disimpan! (${time})`);
     });
+}
+
+async function getScrappedFanartList() {
+    const saveFanartNice = await getFromStorage('saveFanartNice')
+    const saveFanartWow = await getFromStorage('saveFanartWow')
+    const saveFanartYooo = await getFromStorage('saveFanartYooo')
+    
+    // parse
+    const parsedFanartNice = JSON.parse(saveFanartNice)
+    const parsedFanartWow = JSON.parse(saveFanartWow)
+    const parsedFanartYooo = JSON.parse(saveFanartYooo)
+
+    // find new scrapped fanart
+    const latestUpdateTimestamp = await getFromStorage('latestUpdate')
+    const scrappedFanartNice = []
+    const scrappedFanartWow = []
+    const scrappedFanartYooo = []
+
+    for(let fanart of parsedFanartNice) {
+        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartNice.push(fanart)
+    }
+    for(let fanart of parsedFanartWow) {
+        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartWow.push(fanart)
+    }
+    for(let fanart of parsedFanartYooo) {
+        if(+fanart.timestamp > +latestUpdateTimestamp) scrappedFanartYooo.push(fanart)
+    }
+
+    // return data
+    return {
+        saveFanartNice: JSON.stringify(scrappedFanartNice), 
+        saveFanartWow: JSON.stringify(scrappedFanartNice), 
+        saveFanartYooo: JSON.stringify(scrappedFanartYooo),
+    }
 }
 
 /**
