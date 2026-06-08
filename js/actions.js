@@ -1,7 +1,7 @@
 
 // Menunggu hingga seluruh DOM popup selesai dimuat
 document.addEventListener('DOMContentLoaded', async function() {
-    
+
     // load fanart list
     await createFanartList()
     // check fanart token
@@ -38,25 +38,34 @@ function openLinkNewTab(url) {
 }
 
 async function createFanartList() {
-    const fanartTabs = document.querySelectorAll('.tab-content')
-    const containerList = document.querySelectorAll('.fanart-container')
-    for(let tab of fanartTabs) {
+    const fanartTabs = document.querySelectorAll('.tab-btn')
+    const fanartContentList = document.querySelectorAll('.tab-content')
+    const fanartContainerList = document.querySelectorAll('.fanart-container')
+    for(let i=0; i<fanartContentList.length; i++) {
+        const fanartContent = fanartContentList.item(i)
+        
         // tab1 = nice | tab2 = wow | tab3 = yooo
-        switch(tab.id) {
+        switch(fanartContent.id) {
             case 'tab1':
                 const getNiceData = await getFromStorage('saveFanartNice')
                 const fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
-                createFanartItem(containerList[0], fanartNiceList)
+                // fanart count
+                fanartTabs[i].textContent += ` (${fanartNiceList.length})`
+                createFanartItem(fanartContainerList[0], fanartNiceList)
                 break
             case 'tab2':
                 const getWowData = await getFromStorage('saveFanartWow')
                 const fanartWowList = getWowData ? JSON.parse(getWowData) : []
-                createFanartItem(containerList[1], fanartWowList)
+                // fanart count
+                fanartTabs[i].textContent += ` (${fanartWowList.length})`
+                createFanartItem(fanartContainerList[1], fanartWowList)
                 break
             case 'tab3':
                 const getYoooData = await getFromStorage('saveFanartYooo')
                 const fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
-                createFanartItem(containerList[2], fanartYoooList)
+                // fanart count
+                fanartTabs[i].textContent += ` (${fanartYoooList.length})`
+                createFanartItem(fanartContainerList[2], fanartYoooList)
                 break
         }
     }
@@ -116,6 +125,21 @@ function saveToStorage(key, value) {
     });
 }
 
+async function updateFanartList(key, newFanartList) {
+    const fanartData = await getFromStorage(key)
+    if(fanartData) {
+        // data sudah ada, maka update list
+        const oldFanartList = JSON.parse(fanartData)
+        // hapus data duplikat
+        const filterFanartList = [...oldFanartList, ...newFanartList]
+                                .filter((v,i,arr) => i === arr.findIndex(w => v.url === w.url))
+        saveToStorage(key, JSON.stringify(filterFanartList))
+    } else {
+        // data belum ada, maka set data pertama
+        saveToStorage(key, JSON.stringify(newFanartList))
+    }
+}
+
 function setFanartToken() {
     const token = prompt('input fanart token:')
 
@@ -133,25 +157,43 @@ function checkFanartToken() {
     })
 }
 
+function convertResDataToArray(value) {
+    const objectString = value.map(v => `{${v}}`)
+    const arrayString = `[${objectString.join(',')}]`
+    return JSON.parse(arrayString)
+}
+
 function getFromRedisCommand(event) {
     chrome.runtime.sendMessage(
         {action: 'getFanartFromRedis'},
         res => {
             if(res && res.status === 200) {
-                // parse fanart data
-                const wholeFanartList = JSON.parse(res.data)
-                
-                // set fanart list
-                for(let [key, value] of Object.entries(wholeFanartList)) {
-                    saveToStorage(key, value)
+                // loop res data
+                for(let [key, value] of Object.entries(res.data)) {
+                    // parse data
+                    switch(key) {
+                        case 'saveFanartNice':
+                            // modify data so it can be parse to array
+                            const niceArray = convertResDataToArray(value)
+                            updateFanartList(key, niceArray)
+                            break
+                        case 'saveFanartWow':
+                            const wowArray = convertResDataToArray(value)
+                            updateFanartList(key, wowArray)
+                            break
+                        case 'saveFanartYooo':
+                            const yoooArray = convertResDataToArray(value)
+                            updateFanartList(key, yoooArray)
+                            break
+                    }
                 }
 
                 // response status
-                event.target.textContent += ' ✅'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 2000);
+                event.target.textContent += ` (${res.currentPage}) ✅`
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 3000);
             } else {
-                event.target.textContent += ' ❌'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 2000);
+                event.target.textContent += ` (${res.currentPage}) ❌`
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 3000);
             }
         }
     )
@@ -163,10 +205,10 @@ function updateToRedisCommand(event) {
         res => {
             if(res && res.status === 200) {
                 event.target.textContent += ' ✅'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 2000);
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ✅', ''), 3000);
             } else {
                 event.target.textContent += ' ❌'
-                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 2000);
+                setTimeout(() => event.target.textContent = event.target.textContent.replace(' ❌', ''), 3000);
             }
         }
     )

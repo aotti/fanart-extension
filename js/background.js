@@ -38,19 +38,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const base64 = await convertImageToBase64(imageUrl);
 
         // Simpan hasil Base64 ke storage agar bisa dibaca oleh popup.html
-        if(base64) updateFanartList({key: info.menuItemId, postUrl, base64})
+        if(base64) scrapFanartList({key: info.menuItemId, postUrl, base64})
     } else if (info.menuItemId === "saveFanartWow") {
         const postUrl = info?.linkUrl || info?.pageUrl
         const imageUrl = info.srcUrl.replace(/name=.*/, 'name=120x120');
         const base64 = await convertImageToBase64(imageUrl);
-        if(base64) updateFanartList({key: info.menuItemId, postUrl, base64})
+        if(base64) scrapFanartList({key: info.menuItemId, postUrl, base64})
     } else if (info.menuItemId === "saveFanartYooo") {
         const postUrl = info?.linkUrl || info?.pageUrl
         const imageUrl = info.srcUrl.replace(/name=.*/, 'name=120x120');
         const base64 = await convertImageToBase64(imageUrl);
-        if(base64) updateFanartList({key: info.menuItemId, postUrl, base64})
+        if(base64) scrapFanartList({key: info.menuItemId, postUrl, base64})
     }
 });
+
+// infinite scroll params
+let currentPage = 1
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
@@ -59,42 +62,53 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     // check action
     if(request.action == 'getFanartFromRedis') {
         // get fanart from redis
-        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {method: 'GET'})).json()
+        const fanartMoreQueryParam = `&page=${currentPage}&limit=15`
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam+fanartMoreQueryParam, {method: 'GET'})).json()
+
+        // update infinite scroll params
+        if(fanartFetch.status === 200) currentPage += 1
         
         // sendResponse for chrome
         sendResponse({
             status: fanartFetch.status, 
             message: fanartFetch.message, 
-            data: fanartFetch.data
+            data: fanartFetch.data,
+            currentPage,
         })
         // return for firefox
         return {
             status: fanartFetch.status, 
             message: fanartFetch.message, 
-            data: fanartFetch.data
+            data: fanartFetch.data,
+            currentPage,
         }
     } else if(request.action == 'updateFanartToRedis') {
         // update fanart to redis
+        // get all fanart
         const saveFanartNice = await getFromStorage('saveFanartNice')
         const saveFanartWow = await getFromStorage('saveFanartWow')
         const saveFanartYooo = await getFromStorage('saveFanartYooo')
-        const wholeFanartList = {saveFanartNice, saveFanartWow, saveFanartYooo}
+        // remove the array+object closures on start+end
+        const wholeFanartList = {
+            saveFanartNice: saveFanartNice.replace('[{', '').replace('}]', ''), 
+            saveFanartWow: saveFanartWow.replace('[{', '').replace('}]', ''), 
+            saveFanartYooo: saveFanartYooo.replace('[{', '').replace('}]', ''),
+        }
 
-        const fanartBody = {fanart_list: JSON.stringify(wholeFanartList)}
         const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {
             method: 'PUT', 
-            body: JSON.stringify(fanartBody)
+            body: JSON.stringify(wholeFanartList)
         })).json()
         
         sendResponse({
             status: fanartFetch.status, 
             message: fanartFetch.message, 
-            data: fanartFetch.data
+            data: fanartFetch.data,
         })
         return {
             status: fanartFetch.status, 
             message: fanartFetch.message, 
-            data: fanartFetch.data
+            data: fanartFetch.data,
         }
     }
     return true
@@ -135,20 +149,23 @@ function saveToStorage(key, value) {
     });
 }
 
-async function updateFanartList(props) {
+/**
+ * @description updating fanart from context menu action 
+ */
+async function scrapFanartList(props) {
     const {key, postUrl, base64} = props
 
     const fanartData = await getFromStorage(key)
     if(fanartData) {
         // data sudah ada, maka update list
         const fanartList = JSON.parse(fanartData)
-        fanartList.unshift({url: postUrl, img: base64})
+        fanartList.unshift({url: postUrl, img: base64, timestamp: Date.now()})
         // hapus data duplikat
         const filterFanartList = fanartList.filter((v,i,arr) => i === arr.findIndex(w => v.url === w.url))
         saveToStorage(key, JSON.stringify(filterFanartList))
     } else {
         // data belum ada, maka set data pertama
-        const fanartList = [{url: postUrl, img: base64}]
+        const fanartList = [{url: postUrl, img: base64, timestamp: Date.now()}]
         saveToStorage(key, JSON.stringify(fanartList))
     }
 }
