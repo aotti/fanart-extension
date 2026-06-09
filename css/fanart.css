@@ -19,6 +19,10 @@
     align-items: center;
 }
 
+.fanart-item.hide {
+    display: none;
+}
+
 .fanart-fetch-success {
     background-color: chartreuse;
     opacity: 0.5;

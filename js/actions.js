@@ -1,9 +1,10 @@
 
 // Menunggu hingga seluruh DOM popup selesai dimuat
 document.addEventListener('DOMContentLoaded', async function() {
-
     // load fanart list
     await createFanartList()
+    // load author list
+    setupAuthorDropdown();
     // check fanart token
     checkFanartToken()
 
@@ -40,85 +41,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateToRedisCommand(event)
     }
 });
-
-async function createFanartList() {
-    const fanartTabs = document.querySelectorAll('.tab-btn')
-    const fanartContentList = document.querySelectorAll('.tab-content')
-    const fanartContainerList = document.querySelectorAll('.fanart-container')
-    for(let i=0; i<fanartContentList.length; i++) {
-        const fanartContent = fanartContentList.item(i)
-        
-        // tab1 = nice | tab2 = wow | tab3 = yooo
-        switch(fanartContent.id) {
-            case 'tab1':
-                const getNiceData = await getFromStorage('saveFanartNice')
-                const fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
-                // fanart count
-                fanartTabs[i].textContent += ` (${fanartNiceList.length})`
-                createFanartItem(fanartContainerList[0], fanartNiceList)
-                break
-            case 'tab2':
-                const getWowData = await getFromStorage('saveFanartWow')
-                const fanartWowList = getWowData ? JSON.parse(getWowData) : []
-                // fanart count
-                fanartTabs[i].textContent += ` (${fanartWowList.length})`
-                createFanartItem(fanartContainerList[1], fanartWowList)
-                break
-            case 'tab3':
-                const getYoooData = await getFromStorage('saveFanartYooo')
-                const fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
-                // fanart count
-                fanartTabs[i].textContent += ` (${fanartYoooList.length})`
-                createFanartItem(fanartContainerList[2], fanartYoooList)
-                break
-        }
-    }
-}
-
-function createFanartItem(container, fanartList) {
-    for(let fanart of fanartList) {
-        const author = fanart.url.replace('https://', '').split('/')[1]
-
-        // create fanart item
-        const fanartDiv = document.createElement('div')
-        fanartDiv.classList.add('fanart-item')
-        // image 
-        const fanartImg = document.createElement('img')
-        fanartImg.src = fanart.img
-        fanartImg.alt = 'fanart-img'
-        fanartImg.title = `@${author}`
-        // fanartImg.height = 120
-
-        // action div
-        const fanartActionDiv = document.createElement('div')
-        fanartActionDiv.classList.add('fanart-action')
-        // anchor
-        const fanartAnchor = document.createElement('a')
-        fanartAnchor.href = `#${fanart.url}`
-        fanartAnchor.textContent = 'open'
-        // copy
-        const fanartCopy = document.createElement('button')
-        fanartCopy.textContent = 'copy'
-        fanartCopy.onclick = (event) => {
-            navigator.clipboard.writeText(fanart.url)
-            .then(() => {
-                event.target.textContent += ' ✅'
-                setTimeout(() => event.target.textContent = 'copy', 1000);
-            })
-        }
-
-        // append action elements
-        fanartActionDiv.appendChild(fanartAnchor)
-        fanartActionDiv.appendChild(fanartCopy)
-
-        // append image and anchor to div
-        fanartDiv.appendChild(fanartImg)
-        fanartDiv.appendChild(fanartActionDiv)
-
-        // append to fanart container
-        container.appendChild(fanartDiv)
-    }
-}
 
 async function updateFanartList(key, newFanartList) {
     const fanartData = await getFromStorage(key)
