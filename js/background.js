@@ -16,6 +16,8 @@ chrome.runtime.onInstalled.addListener(() => {
         contexts: ["image"]                 // PENTING: Opsi ini HANYA muncul saat pengguna klik kanan pada GAMBAR
     });
 
+    // set has more fanart
+    saveToStorage('hasMoreFanart', 'true')
     // set update timestamp for 1st time
     saveToStorage('updateTimestamp', Date.now().toString())
 });
@@ -49,21 +51,45 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 });
 
-// infinite scroll params
+// infinity scroll param
 let currentPage = 1
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
     const fanartToken = await getFromStorage('fanartToken')
     const fanartQueryParam = `?fanart_token=${fanartToken}`
+
     // check action
     if(request.action == 'getFanartFromRedis') {
+        const limit = 20
+
+        // is more fanart real
+        const hasMoreFanart = await getFromStorage('hasMoreFanart')
+        if(hasMoreFanart != 'true') {
+            return responseFromBack({
+                status: 400,
+                message: 'no more fanart in redis',
+                data: null,
+                currentPage,
+            }, sendResponse)
+        }
+
         // get fanart from redis
-        const fanartMoreQueryParam = `&page=${currentPage}&limit=15`
+        const fanartMoreQueryParam = `&page=${currentPage}&limit=${limit}`
         const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam+fanartMoreQueryParam, {method: 'GET'})).json()
 
         // update infinite scroll params
-        if(fanartFetch.status === 200) currentPage += 1
+        if(fanartFetch.status === 200) {
+            currentPage += 1
+
+            // check if there is more fanart in redis
+            let fanartCounter = 0
+            for(let [key, value] of Object.entries(fanartFetch.data)) {
+                if(value?.length) fanartCounter += value.length
+            }
+            // if received fanart less than the limit, then no more fanart
+            if(fanartCounter < limit) saveToStorage('hasMoreFanart', 'false')
+        }
         
         return responseFromBack({...fanartFetch, currentPage}, sendResponse)
     } else if(request.action == 'updateFanartToRedis') {

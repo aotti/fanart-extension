@@ -110,3 +110,9 @@ body {
 .footer .footer-btn:last-child {
   border-left: 2px solid #555;
 }
+
+.notif {
+  margin: 0;
+  padding: 0 10px;
+  text-align: center;
+}

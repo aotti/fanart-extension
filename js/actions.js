@@ -22,20 +22,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     // set fanart token
     const fanartTokenButton = document.querySelector('#setFanartToken')
     fanartTokenButton.onclick = () => setFanartToken()
+
+    // notif
+    const notifElement = document.querySelector('.notif')
     
     // get fanart from redis
     const getFanartRedisButton = document.querySelector('#getFromRedis')
-    getFanartRedisButton.onclick = event => getFromRedisCommand(event)
+    getFanartRedisButton.onclick = event => {
+        notifElement.textContent = 'getting fanart..'
+        getFromRedisCommand(event)
+    }
     
     // update fanart to redis
     const updateFanartRedisButton = document.querySelector('#updateToRedis')
-    updateFanartRedisButton.onclick = event => updateToRedisCommand(event)
+    updateFanartRedisButton.onclick = event => {
+        notifElement.textContent = 'uploading fanart..'
+        updateToRedisCommand(event)
+    }
 });
-
-// Fungsi universal untuk membuka tab baru
-function openLinkNewTab(url) {
-    chrome.tabs.create({ url });
-}
 
 async function createFanartList() {
     const fanartTabs = document.querySelectorAll('.tab-btn')
@@ -73,12 +77,16 @@ async function createFanartList() {
 
 function createFanartItem(container, fanartList) {
     for(let fanart of fanartList) {
+        const author = fanart.url.replace('https://', '').split('/')[1]
+
         // create fanart item
         const fanartDiv = document.createElement('div')
         fanartDiv.classList.add('fanart-item')
         // image 
         const fanartImg = document.createElement('img')
         fanartImg.src = fanart.img
+        fanartImg.alt = 'fanart-img'
+        fanartImg.title = `@${author}`
         // fanartImg.height = 120
 
         // action div
@@ -112,19 +120,6 @@ function createFanartItem(container, fanartList) {
     }
 }
 
-async function getFromStorage(key) {
-    // this shit return object even if the storage is empty
-    const data = await chrome.storage.local.get([key])
-    return Object.keys(data).length > 0 ? data[key] : null
-}
-
-function saveToStorage(key, value) {
-    chrome.storage.local.set({ [key]: value }, () => {
-        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
-        console.log(`Gambar berhasil disimpan! (${time})`);
-    });
-}
-
 async function updateFanartList(key, newFanartList) {
     const fanartData = await getFromStorage(key)
     if(fanartData) {
@@ -138,23 +133,6 @@ async function updateFanartList(key, newFanartList) {
         // data belum ada, maka set data pertama
         saveToStorage(key, JSON.stringify(newFanartList))
     }
-}
-
-function setFanartToken() {
-    const token = prompt('input fanart token:')
-
-    chrome.storage.local.set({ fanartToken: token }, () => {
-        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
-        console.log(`Token berhasil disimpan! (${time})`);
-    });
-}
-
-function checkFanartToken() {
-    getFromStorage('fanartToken').then(res => {
-        if(!res) return
-        const fanartTokenButton = document.querySelector('#setFanartToken')
-        fanartTokenButton.textContent = 'set fanart token ✅'
-    })
 }
 
 function convertResDataToArray(value) {
@@ -187,22 +165,11 @@ function getFromRedisCommand(event) {
                             break
                     }
                 }
-
                 // response success
-                event.target.classList.add('fanart-fetch-success')
-                event.target.textContent += ` (${res.currentPage}) ✅`
-                setTimeout(() => {
-                    event.target.classList.remove('fanart-fetch-success')
-                    event.target.textContent = event.target.textContent.replace(' ✅', '')
-                }, 3000);
+                responseToFront(res, event, `get from redis (${res.currentPage})`)
             } else {
                 // response error
-                event.target.classList.add('fanart-fetch-failed')
-                event.target.textContent += ` (${res.currentPage}) ❌`
-                setTimeout(() => {
-                    event.target.classList.remove('fanart-fetch-failed')
-                    event.target.textContent = event.target.textContent.replace(' ❌', '')
-                }, 3000);
+                responseToFront(res, event, `get from redis (${res.currentPage})`)
             }
         }
     )
@@ -211,24 +178,65 @@ function getFromRedisCommand(event) {
 function updateToRedisCommand(event) {
     chrome.runtime.sendMessage(
         {action: 'updateFanartToRedis'},
-        res => {
-            if(res && res.status === 200) {
-                // response success
-                event.target.classList.add('fanart-fetch-success')
-                event.target.textContent += ' ✅'
-                setTimeout(() => {
-                    event.target.classList.remove('fanart-fetch-success')
-                    event.target.textContent = event.target.textContent.replace(' ✅', '')
-                }, 3000);
-            } else {
-                // response error
-                event.target.classList.add('fanart-fetch-failed')
-                event.target.textContent += ' ❌'
-                setTimeout(() => {
-                    event.target.classList.remove('fanart-fetch-failed')
-                    event.target.textContent = event.target.textContent.replace(' ❌', '')
-                }, 3000);
-            }
-        }
+        res => responseToFront(res, event, 'update to redis')
     )
+}
+
+function responseToFront(res, event, eventText) {
+    const notifElement = document.querySelector('.notif')
+    notifElement.textContent = res.message
+    setTimeout(() => notifElement.textContent = '', 3000);
+
+    if(res && res.status === 200) {
+        // response success
+        event.target.classList.add('fanart-fetch-success')
+        event.target.textContent = `${eventText} ✅`
+        setTimeout(() => {
+            event.target.classList.remove('fanart-fetch-success')
+            event.target.textContent = event.target.textContent.replace(' ✅', '')
+        }, 3000);
+    } else {
+        // response error
+        event.target.classList.add('fanart-fetch-failed')
+        event.target.textContent = `${eventText} ❌`
+        setTimeout(() => {
+            event.target.classList.remove('fanart-fetch-failed')
+            event.target.textContent = event.target.textContent.replace(' ❌', '')
+        }, 3000);
+    }
+}
+
+// Fungsi universal untuk membuka tab baru
+function openLinkNewTab(url) {
+    chrome.tabs.create({ url });
+}
+
+async function getFromStorage(key) {
+    // this shit return object even if the storage is empty
+    const data = await chrome.storage.local.get([key])
+    return Object.keys(data).length > 0 ? data[key] : null
+}
+
+function saveToStorage(key, value) {
+    chrome.storage.local.set({ [key]: value }, () => {
+        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
+        console.log(`Gambar berhasil disimpan! (${time})`);
+    });
+}
+
+function setFanartToken() {
+    const token = prompt('input fanart token:')
+
+    chrome.storage.local.set({ fanartToken: token }, () => {
+        const time = new Date().toLocaleString('id', {timeStyle: 'short', hour12: true})
+        console.log(`Token berhasil disimpan! (${time})`);
+    });
+}
+
+function checkFanartToken() {
+    getFromStorage('fanartToken').then(res => {
+        if(!res) return
+        const fanartTokenButton = document.querySelector('#setFanartToken')
+        fanartTokenButton.textContent = 'set fanart token ✅'
+    })
 }
