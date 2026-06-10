@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupAuthorDropdown();
     // check fanart token
     checkFanartToken()
+    // check fanart limit
+    fanartLimitWarning()
 
     // ANCHOR ONCLICK EVENT
     // ambil semua anchor element
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     fanartTokenButton.onclick = () => setFanartToken()
 
     // notif
-    const notifElement = document.querySelector('.notif')
+    const notifElement = document.querySelector('#notif')
     
     // get fanart from redis
     const getFanartRedisButton = document.querySelector('#getFromRedis')
@@ -40,7 +42,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         notifElement.textContent = 'uploading fanart..'
         updateToRedisCommand(event)
     }
+
+    // remove some fanart
+    const removeFanartButton = document.querySelector('#removeFanart')
+    removeFanartButton.onclick = async () => {
+        if(confirm('Are you sure wanna remove 100 nice fanarts?')) {
+            if(fanartLimitCounter < 500) 
+                notifElement.textContent = 'your fanart still < 500'
+            else {
+                notifElement.textContent = 'removing 100 nice fanarts.. 😢'
+                await removeFanartList()
+            }
+        }
+        setTimeout(() => notifElement.textContent = '', 3000);
+    }
 });
+
+function fanartLimitWarning() {
+    if(fanartLimitCounter >= 800) {
+        alert('Your storage almost reach its limit, please remove some fanart')
+    } else if(fanartLimitCounter >= 900) {
+        alert("❗ ITS OVER 900 FANARTS ❗")
+    }
+}
 
 async function updateFanartList(key, newFanartList) {
     const fanartData = await getFromStorage(key)
@@ -54,6 +78,15 @@ async function updateFanartList(key, newFanartList) {
     } else {
         // data belum ada, maka set data pertama
         saveToStorage(key, JSON.stringify(newFanartList))
+    }
+}
+
+async function removeFanartList() {
+    const getNiceData = await getFromStorage('saveFanartNice')
+    const parsedFanartNice = getNiceData ? JSON.parse(getNiceData) : []
+    if(parsedFanartNice.length >  0) {
+        const slicedFanartNice = parsedFanartNice.slice(0, -100)
+        saveToStorage('saveFanartNice', JSON.stringify(slicedFanartNice))
     }
 }
 
@@ -88,10 +121,10 @@ function getFromRedisCommand(event) {
                     }
                 }
                 // response success
-                responseToFront(res, event, `get from redis (${res.currentPage})`)
+                responseToFront(res, event, `get from redis (${res.currentPage-1})`)
             } else {
                 // response error
-                responseToFront(res, event, `get from redis (${res.currentPage})`)
+                responseToFront(res, event, `get from redis (${res.currentPage-1})`)
             }
         }
     )
@@ -105,7 +138,7 @@ function updateToRedisCommand(event) {
 }
 
 function responseToFront(res, event, eventText) {
-    const notifElement = document.querySelector('.notif')
+    const notifElement = document.querySelector('#notif')
     notifElement.textContent = res.message
     setTimeout(() => notifElement.textContent = '', 3000);
 

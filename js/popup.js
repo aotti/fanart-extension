@@ -1,5 +1,6 @@
 const authorList = []
 const checkedAuthorList = []
+let fanartLimitCounter = 0
 
 document.addEventListener('DOMContentLoaded', function() {
     // Mengambil semua tombol tab dan konten tab
@@ -36,6 +37,7 @@ async function createFanartList() {
                 const getNiceData = await getFromStorage('saveFanartNice')
                 const fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
                 // fanart count
+                fanartLimitCounter += fanartNiceList.length
                 fanartTabs[i].textContent += ` (${fanartNiceList.length})`
                 createFanartItem(fanartContent.children[0], fanartNiceList)
                 break
@@ -43,6 +45,7 @@ async function createFanartList() {
                 const getWowData = await getFromStorage('saveFanartWow')
                 const fanartWowList = getWowData ? JSON.parse(getWowData) : []
                 // fanart count
+                fanartLimitCounter += fanartWowList.length
                 fanartTabs[i].textContent += ` (${fanartWowList.length})`
                 createFanartItem(fanartContent.children[0], fanartWowList)
                 break
@@ -50,6 +53,7 @@ async function createFanartList() {
                 const getYoooData = await getFromStorage('saveFanartYooo')
                 const fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
                 // fanart count
+                fanartLimitCounter += fanartYoooList.length
                 fanartTabs[i].textContent += ` (${fanartYoooList.length})`
                 createFanartItem(fanartContent.children[0], fanartYoooList)
                 break
@@ -171,6 +175,10 @@ function showFanartForSelectedAuthor() {
         const fanartImg = fanartDiv.children.item(0)
         if(checkedAuthorList.length > 0 && checkedAuthorList.indexOf(fanartImg.title.replace('@','')) === -1) {
             fanartDiv.classList.add('hide')
+        } else if(checkedAuthorList.length === authorList.length) {
+            const allCheckbox = document.querySelectorAll('input[type="checkbox"]')
+            for(let input of allCheckbox) input.checked = false
+            fanartDiv.classList.remove('hide')
         } else {
             fanartDiv.classList.remove('hide')
         }

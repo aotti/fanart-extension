@@ -65,7 +65,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
         // is more fanart real
         const hasMoreFanart = await getFromStorage('hasMoreFanart')
-        if(hasMoreFanart != 'true') {
+        if(hasMoreFanart && hasMoreFanart != 'true') {
             return responseFromBack({
                 status: 400,
                 message: 'no more fanart in redis',
