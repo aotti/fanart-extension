@@ -115,11 +115,18 @@ function createFanartItem(container, fanartList) {
 function setupAuthorDropdown() {
     const dropdownBtn = document.getElementById('authorDropdownBtn');
     const dropdownContent = document.getElementById('authorDropdownContent');
+    const searchInput = document.getElementById('authorSearchInput'); 
+    const authorListContainer = document.getElementById('authorListContainer'); 
 
     // Toggle (buka/tutup) dropdown saat tombol ditekan
     dropdownBtn.addEventListener('click', (event) => {
         event.stopPropagation(); // Mencegah klik menyebar ke window
         dropdownContent.classList.toggle('show');
+
+        // Opsional: Langsung fokuskan kursor ke kolom search saat dropdown dibuka
+        if (dropdownContent.classList.contains('show')) {
+            searchInput.focus();
+        }
     });
 
     // Generate list author menjadi checkbox
@@ -152,7 +159,29 @@ function setupAuthorDropdown() {
         labelItem.appendChild(document.createTextNode(`${data.author} (${data.count})`));
 
         // Masukkan label ke dalam konten dropdown
-        dropdownContent.appendChild(labelItem);
+        authorListContainer.appendChild(labelItem);
+    });
+
+    // Logika search
+    searchInput.addEventListener('input', function(event) {
+        // Ambil teks yang diketik lalu ubah ke huruf kecil (case-insensitive)
+        const filterTeks = event.target.value.toLowerCase();
+        
+        // Ambil semua elemen label (author-item)
+        const semuaAuthorItem = authorListContainer.getElementsByClassName('author-item');
+
+        // Looping untuk mengecek masing-masing nama author
+        for (let i = 0; i < semuaAuthorItem.length; i++) {
+            // Ambil teks nama author dari label
+            const namaAuthor = semuaAuthorItem[i].textContent || semuaAuthorItem[i].innerText;
+            
+            // Jika nama author mengandung huruf yang diketik, tampilkan. Jika tidak, sembunyikan.
+            if (namaAuthor.toLowerCase().indexOf(filterTeks) > -1) {
+                semuaAuthorItem[i].style.display = ""; // Munculkan kembali (atau biarkan default)
+            } else {
+                semuaAuthorItem[i].style.display = "none"; // Sembunyikan sepenuhnya
+            }
+        }
     });
 
     // Mencegah dropdown tertutup otomatis saat mengklik area di DALAM dropdown (saat centang box)
