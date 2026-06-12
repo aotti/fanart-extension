@@ -32,3 +32,18 @@
     background-color: red;
     opacity: 0.5;
 }
+
+.fanart-saved-checkmark {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #00FF00;
+    font-size: 16px;
+    padding: 2px 2px;
+    border-radius: 4px;
+    border: 2px solid #00FF00;
+    z-index: 9999; /* Pastikan selalu berada di paling atas */
+    pointer-events: none; /* Penting! Agar centang tidak menghalangi saat gambar diklik */
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+}
