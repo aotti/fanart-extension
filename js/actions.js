@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const removeFanartButton = document.querySelector('#removeFanart')
     removeFanartButton.onclick = async () => {
         if(confirm('Are you sure wanna remove 100 nice fanarts?')) {
-            if(fanartLimitCounter < 500) 
-                notifElement.textContent = 'your fanart still < 500'
+            if(fanartLimitCounter < 900) 
+                notifElement.textContent = 'your fanart still < 900'
             else {
                 notifElement.textContent = 'removing 100 nice fanarts.. 😢'
                 await removeFanartList()
@@ -59,10 +59,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function fanartLimitWarning() {
-    if(fanartLimitCounter >= 800) {
-        alert('Your storage almost reach its limit, please remove some fanart')
-    } else if(fanartLimitCounter >= 900) {
-        alert("❗ ITS OVER 900 FANARTS ❗")
+    if(fanartLimitCounter >= 1000) {
+        const fanartTabs = document.querySelectorAll('.tab-btn')
+        let fanartAmount = 0
+        fanartTabs.forEach(e => fanartAmount += +e.textContent.match(/\d+/)[0])
+        alert(`❗ ITS OVER 1000 FANARTS ❗ (${fanartAmount})`)
     }
 }
 
