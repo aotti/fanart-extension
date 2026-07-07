@@ -35,6 +35,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         notifElement.textContent = 'getting fanart..'
         getFromRedisCommand(event)
     }
+
+    // load more fanart from redis
+    const loadMoreFanartButton = document.querySelector('#loadMoreFanart')
+    loadMoreFanartButton.onclick = event => {
+        notifElement.textContent = 'load more fanart..'
+        loadMoreFromRedisCommand(event)
+    }
     
     // update fanart to redis
     const updateFanartRedisButton = document.querySelector('#updateToRedis')
@@ -122,10 +129,46 @@ function getFromRedisCommand(event) {
                     }
                 }
                 // response success
-                responseToFront(res, event, `get from redis (${res.currentPage-1})`)
+                displayResponse(res, event, `get from redis (${res.currentPage-1})`)
             } else {
                 // response error
-                responseToFront(res, event, `get from redis (${res.currentPage-1})`)
+                displayResponse(res, event, `get from redis (${res.currentPage-1})`)
+            }
+        }
+    )
+}
+
+function loadMoreFromRedisCommand(event) {
+    chrome.runtime.sendMessage(
+        {action: 'loadMoreFanartFromRedis'},
+        async res => {
+            if(res && res.status === 200) {
+                let niceArray = null, wowArray = null, yoooArray = null
+                // loop res data
+                for(let [key, value] of Object.entries(res.data)) {
+                    // parse data 
+                    switch(key) {
+                        case 'saveFanartNice':
+                            // modify data so it can be parse to array
+                            niceArray = convertResDataToArray(value)
+                            break
+                        case 'saveFanartWow':
+                            wowArray = convertResDataToArray(value)
+                            break
+                        case 'saveFanartYooo':
+                            yoooArray = convertResDataToArray(value)
+                            break
+                    }
+                }
+                // set into html directly (to prevent big local storage)
+                await createFanartList('tab1', niceArray)
+                await createFanartList('tab2', wowArray)
+                await createFanartList('tab3', yoooArray)
+                // response success
+                displayResponse(res, event, `load more from redis (${res.loadMorePage})`)
+            } else {
+                // response error
+                displayResponse(res, event, `load more from redis (${res.loadMorePage})`)
             }
         }
     )
@@ -134,11 +177,11 @@ function getFromRedisCommand(event) {
 function updateToRedisCommand(event) {
     chrome.runtime.sendMessage(
         {action: 'updateFanartToRedis'},
-        res => responseToFront(res, event, 'update to redis')
+        res => displayResponse(res, event, 'update to redis')
     )
 }
 
-function responseToFront(res, event, eventText) {
+function displayResponse(res, event, eventText) {
     const notifElement = document.querySelector('#notif')
     notifElement.textContent = res.message
     setTimeout(() => notifElement.textContent = '', 3000);

@@ -25,17 +25,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-async function createFanartList() {
+async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
     const fanartTabs = document.querySelectorAll('.tab-btn')
     const fanartContentList = document.querySelectorAll('.tab-content')
-    for(let i=0; i<fanartContentList.length; i++) {
-        const fanartContent = fanartContentList.item(i)
-        
+
+    if(loadMoreTab && loadMoreFanartList) {
+        // for load more fanart
+        if(loadMoreTab == 'tab1') {
+            const fanartContentNice = fanartContentList.item(0)
+            setFanartList(0, fanartContentNice)
+        } else if(loadMoreTab == 'tab2') {
+            const fanartContentWow = fanartContentList.item(1)
+            setFanartList(1, fanartContentWow)
+        } else if(loadMoreTab == 'tab3') {
+            const fanartContentYooo = fanartContentList.item(2)
+            setFanartList(2, fanartContentYooo)
+        }
+    } else {
+        // for local storage fanart
+        for(let i=0; i<fanartContentList.length; i++) {
+            const fanartContent = fanartContentList.item(i)
+            setFanartList(i, fanartContent)
+        }
+    }
+
+    async function setFanartList(i, fanartContent) {
         // tab1 = nice | tab2 = wow | tab3 = yooo
-        switch(fanartContent.id) {
+        switch(loadMoreTab || fanartContent.id) {
             case 'tab1':
                 const getNiceData = await getFromStorage('saveFanartNice')
-                const fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
+                let fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
+                // merge load more fanart
+                if(loadMoreFanartList) {
+                    fanartNiceList = [...fanartNiceList, ...loadMoreFanartList]
+                }
                 // fanart count
                 fanartLimitCounter += fanartNiceList.length
                 fanartTabs[i].textContent += ` (${fanartNiceList.length})`
@@ -43,7 +66,11 @@ async function createFanartList() {
                 break
             case 'tab2':
                 const getWowData = await getFromStorage('saveFanartWow')
-                const fanartWowList = getWowData ? JSON.parse(getWowData) : []
+                let fanartWowList = getWowData ? JSON.parse(getWowData) : []
+                // merge load more fanart
+                if(loadMoreFanartList) {
+                    fanartWowList = [...fanartWowList, ...loadMoreFanartList]
+                }
                 // fanart count
                 fanartLimitCounter += fanartWowList.length
                 fanartTabs[i].textContent += ` (${fanartWowList.length})`
@@ -51,7 +78,11 @@ async function createFanartList() {
                 break
             case 'tab3':
                 const getYoooData = await getFromStorage('saveFanartYooo')
-                const fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
+                let fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
+                // merge load more fanart
+                if(loadMoreFanartList) {
+                    fanartYoooList = [...fanartYoooList, ...loadMoreFanartList]
+                }
                 // fanart count
                 fanartLimitCounter += fanartYoooList.length
                 fanartTabs[i].textContent += ` (${fanartYoooList.length})`

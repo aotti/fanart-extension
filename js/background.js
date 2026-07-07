@@ -53,6 +53,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 // infinity scroll param
 let currentPage = 1
+let loadMorePage = 0
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
@@ -66,7 +67,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         // is more fanart real
         const hasMoreFanart = await getFromStorage('hasMoreFanart')
         if(hasMoreFanart && hasMoreFanart != 'true') {
-            return responseFromBack({
+            return responseFromAPI({
                 status: 400,
                 message: 'no more fanart in redis',
                 data: null,
@@ -78,7 +79,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         const fanartMoreQueryParam = `&page=${currentPage}&limit=${limit}`
         const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam+fanartMoreQueryParam, {method: 'GET'})).json()
 
-        // update infinite scroll params
+        // update current page
         if(fanartFetch.status === 200) {
             currentPage += 1
 
@@ -91,7 +92,20 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             if(fanartCounter < limit) saveToStorage('hasMoreFanart', 'false')
         }
         
-        return responseFromBack({...fanartFetch, currentPage}, sendResponse)
+        return responseFromAPI({...fanartFetch, currentPage}, sendResponse)
+    } else if(request.action == 'loadMoreFanartFromRedis') {
+        const limit = 20
+
+        // get fanart from redis
+        const fanartMoreQueryParam = `&page=${loadMorePage}&limit=${limit}`
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam+fanartMoreQueryParam, {method: 'GET'})).json()
+
+        // update load more page
+        if(fanartFetch.status === 200) {
+            loadMorePage -= 1
+        }
+        
+        return responseFromAPI({...fanartFetch, loadMorePage}, sendResponse)
     } else if(request.action == 'updateFanartToRedis') {
         // update fanart to redis
         // get all new scrapped fanart list
@@ -113,18 +127,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         if(fanartFetch.status === 200) 
             saveToStorage('updateTimestamp', Date.now().toString())
         
-        return responseFromBack(fanartFetch, sendResponse)
+        return responseFromAPI(fanartFetch, sendResponse)
     }
     return true
 })
 
-function responseFromBack(data, sendResponse) {
+function responseFromAPI(data, sendResponse) {
     // sendResponse for chrome
     sendResponse({
         status: data.status, 
         message: data.message, 
         data: data.data,
         currentPage,
+        loadMorePage,
     })
 
     // basic return for firefox
@@ -133,6 +148,7 @@ function responseFromBack(data, sendResponse) {
         message: data.message, 
         data: data.data,
         currentPage,
+        loadMorePage,
     }
 }
 
