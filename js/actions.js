@@ -50,6 +50,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateToRedisCommand(event)
     }
 
+    // compare fanart redis with local
+    const compareFanartButton = document.querySelector('#compareFanart')
+    compareFanartButton.onclick = event => {
+        notifElement.textContent = 'comparing fanart redis with local..'
+        compareFanartCommand(event)
+    }
+
     // remove some fanart
     const removeFanartButton = document.querySelector('#removeFanart')
     removeFanartButton.onclick = async () => {
@@ -64,15 +71,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         setTimeout(() => notifElement.textContent = '', 3000);
     }
 });
-
-function fanartLimitWarning() {
-    if(fanartLimitCounter >= 1000) {
-        const fanartTabs = document.querySelectorAll('.tab-btn')
-        let fanartAmount = 0
-        fanartTabs.forEach(e => fanartAmount += +e.textContent.match(/\d+/)[0])
-        alert(`❗ ITS OVER 1000 FANARTS ❗ (${fanartAmount})`)
-    }
-}
 
 async function updateFanartList(key, newFanartList) {
     const fanartData = await getFromStorage(key)
@@ -143,27 +141,26 @@ function loadMoreFromRedisCommand(event) {
         {action: 'loadMoreFanartFromRedis'},
         async res => {
             if(res && res.status === 200) {
-                let niceArray = null, wowArray = null, yoooArray = null
                 // loop res data
                 for(let [key, value] of Object.entries(res.data)) {
                     // parse data 
+                    // set into html directly (to prevent big local storage)
                     switch(key) {
                         case 'saveFanartNice':
                             // modify data so it can be parse to array
-                            niceArray = convertResDataToArray(value)
+                            const niceArray = convertResDataToArray(value)
+                            await createFanartList('tab1', niceArray)
                             break
                         case 'saveFanartWow':
-                            wowArray = convertResDataToArray(value)
+                            const wowArray = convertResDataToArray(value)
+                            await createFanartList('tab2', wowArray)
                             break
                         case 'saveFanartYooo':
-                            yoooArray = convertResDataToArray(value)
+                            const yoooArray = convertResDataToArray(value)
+                            await createFanartList('tab3', yoooArray)
                             break
                     }
                 }
-                // set into html directly (to prevent big local storage)
-                await createFanartList('tab1', niceArray)
-                await createFanartList('tab2', wowArray)
-                await createFanartList('tab3', yoooArray)
                 // response success
                 displayResponse(res, event, `load more from redis (${res.loadMorePage})`)
             } else {
@@ -178,6 +175,77 @@ function updateToRedisCommand(event) {
     chrome.runtime.sendMessage(
         {action: 'updateFanartToRedis'},
         res => displayResponse(res, event, 'update to redis')
+    )
+}
+
+async function compareFanartCommand(event) {
+    const getNiceData = await getFromStorage('saveFanartNice')
+    const fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
+    const getWowData = await getFromStorage('saveFanartWow')
+    const fanartWowList = getWowData ? JSON.parse(getWowData) : []
+    const getYoooData = await getFromStorage('saveFanartYooo')
+    const fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
+
+    const notifElement = document.querySelector('#notif')
+    const fanartType = prompt(`wow = SaveFanartWow \nyooo = SaveFanartYooo \ninput fanart type:`)
+    notifElement.textContent += `(${fanartType})`
+    chrome.runtime.sendMessage(
+        {action: 'compareFanartRedisWithLocal', fanart_type: fanartType},
+        res => {
+            if(res && res.status === 200) {
+                let comparedWow = null, comparedYooo = null
+                // loop res data
+                for(let [key, value] of Object.entries(res.data)) {
+                    // parse data
+                    switch(key) {
+                        case 'saveFanartWow':
+                            if(value && fanartWowList.length > 0) {
+                                const wowArray = convertResDataToArray(value)
+                                comparedWow = compareFanart(fanartWowList, wowArray)
+                            }
+                            break
+                        case 'saveFanartYooo':
+                            if(value && fanartYoooList.length > 0) {
+                                const yoooArray = convertResDataToArray(value)
+                                comparedYooo = compareFanart(fanartYoooList, yoooArray)
+                            }
+                            break
+                    }
+                }
+
+                // confirmation before upload compared fanart
+                const missedFanartCount = comparedWow?.length || comparedYooo?.length
+                if(confirm(`do you wanna update missed fanart to redis? (${missedFanartCount})`)) {
+                    if(comparedWow) updateComparedFanartCommand(event, fanartType, JSON.stringify(comparedWow))
+                    else if(comparedYooo) updateComparedFanartCommand(event, fanartType, JSON.stringify(comparedYooo))
+                } else {
+                    notifElement.textContent = ''
+                }
+            } else {
+                // response error
+                displayResponse(res, event, `compare fanart 🔀`)
+            }
+        }
+    )
+}
+
+function compareFanart(localFanartList, redisFanartList) {
+    const comparedFanart = []
+    for(let local of localFanartList) {
+        const isFanartExist = redisFanartList.map(v => v.url).indexOf(local.url)
+        if(isFanartExist === -1) comparedFanart.push(local)
+    }
+    return comparedFanart
+}
+
+function updateComparedFanartCommand(event, fanartType, fanartList) {
+    chrome.runtime.sendMessage(
+        {
+            action: 'updateComparedFanartToRedis',
+            fanart_type: fanartType,
+            fanart_list: fanartList,
+        },
+        res => displayResponse(res, event, 'compare fanart 🔀')
     )
 }
 
@@ -238,4 +306,13 @@ function checkFanartToken() {
         const fanartTokenButton = document.querySelector('#setFanartToken')
         fanartTokenButton.textContent = 'set fanart token ✅'
     })
+}
+
+function fanartLimitWarning() {
+    if(fanartLimitCounter >= 1000) {
+        const fanartTabs = document.querySelectorAll('.tab-btn')
+        let fanartAmount = 0
+        fanartTabs.forEach(e => fanartAmount += +e.textContent.match(/\d+/)[0])
+        alert(`❗ ITS OVER 1000 FANARTS ❗ (${fanartAmount})`)
+    }
 }

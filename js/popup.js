@@ -33,19 +33,19 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
         // for load more fanart
         if(loadMoreTab == 'tab1') {
             const fanartContentNice = fanartContentList.item(0)
-            setFanartList(0, fanartContentNice)
+            await setFanartList(0, fanartContentNice)
         } else if(loadMoreTab == 'tab2') {
             const fanartContentWow = fanartContentList.item(1)
-            setFanartList(1, fanartContentWow)
+            await setFanartList(1, fanartContentWow)
         } else if(loadMoreTab == 'tab3') {
             const fanartContentYooo = fanartContentList.item(2)
-            setFanartList(2, fanartContentYooo)
+            await setFanartList(2, fanartContentYooo)
         }
     } else {
         // for local storage fanart
         for(let i=0; i<fanartContentList.length; i++) {
             const fanartContent = fanartContentList.item(i)
-            setFanartList(i, fanartContent)
+            await setFanartList(i, fanartContent)
         }
     }
 

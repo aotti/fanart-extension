@@ -128,6 +128,53 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             saveToStorage('updateTimestamp', Date.now().toString())
         
         return responseFromAPI(fanartFetch, sendResponse)
+    } else if(request.action == 'compareFanartRedisWithLocal') {
+        let fanart_type = null
+        switch(request.fanart_type) {
+            case 'wow': fanart_type = 'SaveFanartWow'; break
+            case 'yooo': fanart_type = 'SaveFanartYooo'; break
+        }
+        if(!fanart_type) {
+            return responseFromAPI({
+                status: 400,
+                message: 'fanart type cannot be empty',
+                data: null,
+            }, sendResponse)
+        }
+
+        // get fanart from redis (latest 500 fanart)
+        const fanartMoreQueryParam = `&page=${1}&limit=${500}&fanart_type=${fanart_type}`
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam+fanartMoreQueryParam, {method: 'GET'})).json()
+        
+        return responseFromAPI({...fanartFetch}, sendResponse)
+    } else if(request.action == 'updateComparedFanartToRedis') {
+        let fanart_type = null
+        switch(request.fanart_type) {
+            case 'wow': fanart_type = 'SaveFanartWow'; break
+            case 'yooo': fanart_type = 'SaveFanartYooo'; break
+        }
+        if(!fanart_type) {
+            return responseFromAPI({
+                status: 400,
+                message: 'fanart type cannot be empty',
+                data: null,
+            }, sendResponse)
+        }
+
+        const comparedFanartList = {
+            [fanart_type]: request.fanart_list?.replace('[{', '').replace('}]', ''), 
+        }
+
+        const fanartFetch = await (await fetch(fanartAPI+fanartQueryParam, {
+            method: 'PUT', 
+            body: JSON.stringify(comparedFanartList)
+        })).json()
+
+        // set new update timestamp
+        if(fanartFetch.status === 200) 
+            saveToStorage('updateTimestamp', Date.now().toString())
+        
+        return responseFromAPI(fanartFetch, sendResponse)
     }
     return true
 })
