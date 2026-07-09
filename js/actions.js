@@ -214,12 +214,14 @@ async function compareFanartCommand(event) {
                 }
 
                 // confirmation before upload compared fanart
-                const missedFanartCount = comparedWow?.length || comparedYooo?.length
-                if(confirm(`do you wanna update missed fanart to redis? (${missedFanartCount})`)) {
+                const missedFanartCount = comparedWow?.length || comparedYooo?.length || 0
+                if(missedFanartCount > 0 && confirm(`do you wanna update missed fanart to redis? (${missedFanartCount})`)) {
+                    notifElement.textContent = `updating ${fanartType.toUpperCase()} fanart..`
                     if(comparedWow) updateComparedFanartCommand(event, fanartType, JSON.stringify(comparedWow))
                     else if(comparedYooo) updateComparedFanartCommand(event, fanartType, JSON.stringify(comparedYooo))
                 } else {
-                    notifElement.textContent = ''
+                    notifElement.textContent = `${fanartType.toUpperCase()} fanart is up to date`
+                    setTimeout(() => notifElement.textContent = '', 3000);
                 }
             } else {
                 // response error
