@@ -57,7 +57,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 let fanartNiceList = getNiceData ? JSON.parse(getNiceData) : []
                 // merge load more fanart
                 if(loadMoreFanartList) {
-                    fanartNiceList = [...fanartNiceList, ...loadMoreFanartList]
+                    fanartNiceList = [...loadMoreFanartList]
                 }
                 // fanart count
                 fanartLimitCounter += fanartNiceList.length
@@ -69,7 +69,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 let fanartWowList = getWowData ? JSON.parse(getWowData) : []
                 // merge load more fanart
                 if(loadMoreFanartList) {
-                    fanartWowList = [...fanartWowList, ...loadMoreFanartList]
+                    fanartWowList = [...loadMoreFanartList]
                 }
                 // fanart count
                 fanartLimitCounter += fanartWowList.length
@@ -81,7 +81,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 let fanartYoooList = getYoooData ? JSON.parse(getYoooData) : []
                 // merge load more fanart
                 if(loadMoreFanartList) {
-                    fanartYoooList = [...fanartYoooList, ...loadMoreFanartList]
+                    fanartYoooList = [...loadMoreFanartList]
                 }
                 // fanart count
                 fanartLimitCounter += fanartYoooList.length

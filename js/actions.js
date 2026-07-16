@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         getFromRedisCommand(event)
     }
 
+    // set load more page value
+    setLoadMorePageCommand()
+
     // load more fanart from redis
     const loadMoreFanartButton = document.querySelector('#loadMoreFanart')
     loadMoreFanartButton.onclick = event => {
@@ -102,6 +105,18 @@ function convertResDataToArray(value) {
     return JSON.parse(arrayString)
 }
 
+function setLoadMorePageCommand() {
+    chrome.runtime.sendMessage(
+        {action: 'popupOpen'},
+        res => {
+            if(res && res.status === 200) {
+                const loadMoreFanartButton = document.querySelector('#loadMoreFanart')
+                loadMoreFanartButton.textContent += ` (${res.loadMorePage})`
+            }
+        }
+    )
+}
+
 function getFromRedisCommand(event) {
     chrome.runtime.sendMessage(
         {action: 'getFanartFromRedis'},
@@ -162,10 +177,10 @@ function loadMoreFromRedisCommand(event) {
                     }
                 }
                 // response success
-                displayResponse(res, event, `load more from redis (${res.loadMorePage})`)
+                displayResponse(res, event, `load more (${res.loadMorePage})`)
             } else {
                 // response error
-                displayResponse(res, event, `load more from redis (${res.loadMorePage})`)
+                displayResponse(res, event, `load more (${res.loadMorePage})`)
             }
         }
     )

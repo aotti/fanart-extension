@@ -53,7 +53,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 // infinity scroll param
 let currentPage = 1
-let loadMorePage = 0
+let loadMorePage = null
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
@@ -61,7 +61,15 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartQueryParam = `?fanart_token=${fanartToken}`
 
     // check action
-    if(request.action == 'getFanartFromRedis') {
+    if(request.action == 'popupOpen') {
+        loadMorePage = 0
+        return responseFromAPI({
+            status: 200,
+            message: 'loadMorePage value is set',
+            data: null,
+            loadMorePage,
+        }, sendResponse)
+    } else if(request.action == 'getFanartFromRedis') {
         const limit = 20
 
         // is more fanart real
