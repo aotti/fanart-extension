@@ -1,0 +1,105 @@
+/* =========================================================
+   PANEL UTAMA (Wajib terkunci di sisi kanan dengan lebar tetap)
+   ========================================================= */
+.fanart-live-panel {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 420px !important;          /* Lebar panel terkunci */
+    height: 100vh !important;
+    background-color: #1e1e1e !important;
+    border-left: 2px solid #444 !important;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.6) !important;
+    z-index: 999999 !important;       /* Selalu di atas elemen Twitter */
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}
+
+/* Isolasi gaya teks dan reset internal */
+.fanart-live-panel * {
+    box-sizing: border-box !important;
+    line-height: normal !important;
+}
+
+/* HEADER PANEL */
+.fanart-live-header {
+    padding: 14px !important;
+    background-color: #2b2b2b !important;
+    color: #ffffff !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    border-bottom: 2px solid #00a8ff !important;
+    font-size: 13px !important;
+    letter-spacing: 1px !important;
+    flex-shrink: 0 !important;
+}
+
+/* CONTAINER GRID (Scrollable) */
+.fanart-live-grid {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important; /* 3 Kolom */
+    gap: 8px !important;
+    padding: 10px !important;
+    align-content: start !important;
+}
+
+/* WADAH GAMBAR INDIVIDUAL (Bujur Sangkar Presisi) */
+.fanart-live-panel .fanart-live-item {
+    width: 100% !important;
+    height: 0 !important;
+    padding-bottom: 100% !important;  /* Trik rasio 1:1 paling stabil di CSS */
+    position: relative !important;
+    background-color: #121212 !important;
+    border: 1px solid #444 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+}
+
+/* GAMBAR DI DALAM PANEL */
+.fanart-live-panel .fanart-live-item img {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;  /* Seluruh tinggi/lebar gambar tampil utuh */
+    cursor: pointer !important;
+    background-color: #000000 !important;
+}
+
+.fanart-live-panel .fanart-live-item img:hover {
+    opacity: 0.8 !important;
+}
+
+/* OVERLAY ZOOM PREVIEW FRAME HIJAU (TERKUNCI DI DALAM PANEL KANAN) */
+.fanart-zoom-overlay {
+    display: none;
+    position: absolute !important; /* Terkunci relatif ke livePanel */
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;        /* Mengikuti lebar panel (340px) */
+    height: 100% !important;       /* Mengikuti tinggi panel */
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    z-index: 100000 !important;    /* Di atas header & grid panel */
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: zoom-out !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+}
+
+.fanart-zoom-overlay.active {
+    display: flex !important;
+}
+
+.fanart-zoom-overlay img {
+    max-width: 95% !important;     /* Agar muat di dalam panel 340px */
+    max-height: 85% !important;
+    border: 3px solid #00ff66 !important; /* Border hijau */
+    border-radius: 6px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8) !important;
+    object-fit: contain !important;
+}

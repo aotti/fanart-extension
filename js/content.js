@@ -22,17 +22,24 @@ async function loadSavedImages() {
 }
 
 // 2. Fungsi untuk menempelkan centang hijau ke gambar
-function markSavedImages(anchor) {
-    // Lewati jika gambar sudah pernah dicek agar performa tetap ringan
-    if (anchor.dataset.fanartChecked) return; 
-    anchor.dataset.fanartChecked = "true";
+function markSavedImages(anchorElement) {
+    // Tunggu sampai img element di render
+    const imgElement = anchorElement.querySelector('img')
+    if(!imgElement) return
 
-    // // Normalisasi URL gambar yang ada di layar
-    const cleanAnchorHref = anchor.href.replace(/\/photo\/\d|\/video\/\d/, '')
+    // Lewati jika gambar sudah pernah dicek agar performa tetap ringan
+    if (anchorElement.dataset.fanartChecked) return; 
+    anchorElement.dataset.fanartChecked = "true";
+
+    // Normalisasi URL gambar yang ada di layar
+    const cleanAnchorHref = anchorElement.href.replace(/\/photo\/\d|\/video\/\d/, '')
+
+    // memasukkan gambar ke Live Preview
+    addImageToLivePanel(imgElement, cleanAnchorHref);
     
     // Cek apakah URL gambar ini ada di dalam list yang sudah kita simpan
     if (savedImageUrls.find(v => v.match(cleanAnchorHref))) {
-        const parent = anchor.parentElement;
+        const parent = anchorElement.parentElement;
         
         // Pastikan parent relative agar centang (absolute) tidak lari ke mana-mana
         if (window.getComputedStyle(parent).position === 'static') {
@@ -49,8 +56,12 @@ function markSavedImages(anchor) {
     }
 }
 
-// 3. Gunakan MutationObserver untuk memantau scroll dinamis (Infinite Scroll)
+// Gunakan MutationObserver untuk memantau scroll dinamis (Infinite Scroll)
 const observer = new MutationObserver((mutations) => {
+    // Karena Twitter adalah SPA (Single Page App), halaman tidak reload saat pindah tab.
+    // Kita cek URL setiap kali ada mutasi (perubahan) terjadi di web.
+    checkMediaTabVisibility();
+    
     // Looping hanya pada bagian yang berubah di layar
     for (const mutation of mutations) {
         // Cek node (elemen HTML) yang baru ditambahkan
@@ -73,6 +84,11 @@ const observer = new MutationObserver((mutations) => {
 
 // 4. Jalankan script saat halaman web dimuat
 loadSavedImages().then(() => {
+    // tampilkan live fanart list saat membuka tab media twitter
+    initLivePanel()
+    initZoomOverlay();
+    checkMediaTabVisibility();
+    
     // markSavedImages(); // Cek gambar yang sudah ada saat pertama kali load
     observer.observe(document.body, { childList: true, subtree: true }); // Mulai pantau scroll
 });

@@ -55,6 +55,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 let currentPage = 1
 let loadMorePage = null
 
+// connection to API
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const fanartAPI = 'https://fanart-extension-api.netlify.app/.netlify/functions/api'
     const fanartToken = await getFromStorage('fanartToken')
@@ -70,7 +71,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             loadMorePage,
         }, sendResponse)
     } else if(request.action == 'getFanartFromRedis') {
-        const limit = 20
+        const limit = 30
 
         // is more fanart real
         const hasMoreFanart = await getFromStorage('hasMoreFanart')
@@ -102,7 +103,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         
         return responseFromAPI({...fanartFetch, currentPage}, sendResponse)
     } else if(request.action == 'loadMoreFanartFromRedis') {
-        const limit = 20
+        const limit = 50
 
         // get fanart from redis
         const fanartMoreQueryParam = `&page=${loadMorePage}&limit=${limit}`

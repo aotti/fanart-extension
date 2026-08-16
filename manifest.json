@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Fanart Storage",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "store twitter fanart link with browser extension.",
   "icons": {
     "48": "icons/fanart.png"
@@ -20,8 +20,8 @@
   "content_scripts": [
     {
       "matches": ["https://*.x.com/*"],
-      "js": ["js/content.js"],
-      "css": ["css/fanart.css"]
+      "js": ["js/content.js", "js/content-live.js"],
+      "css": ["css/fanart.css", "css/fanart-live.css"]
     }
   ],
   "permissions": [
