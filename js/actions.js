@@ -1,10 +1,6 @@
 
 // Menunggu hingga seluruh DOM popup selesai dimuat
 document.addEventListener('DOMContentLoaded', async function() {
-    // load fanart list
-    await createFanartList()
-    // load author list
-    setupAuthorDropdown();
     // check fanart token
     checkFanartToken()
     // check fanart limit

@@ -2,7 +2,7 @@ const authorList = []
 const checkedAuthorList = []
 let fanartLimitCounter = 0
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Mengambil semua tombol tab dan konten tab
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -10,19 +10,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Menambahkan event click pada setiap tombol tab
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-        
-        // 1. Hapus status 'active' dari semua tombol dan konten
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
+            // 1. Hapus status 'active' dari semua tombol dan konten
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
 
-        // 2. Tambahkan status 'active' pada tombol yang diklik
-        button.classList.add('active');
+            // 2. Tambahkan status 'active' pada tombol yang diklik
+            button.classList.add('active');
 
-        // 3. Tampilkan konten yang sesuai dengan atribut data-target
-        const targetId = button.getAttribute('data-target');
-        document.getElementById(targetId).classList.add('active');
+            // 3. Tampilkan konten yang sesuai dengan atribut data-target
+            const targetId = button.getAttribute('data-target');
+            document.getElementById(targetId).classList.add('active');
+            
+            // Sembunyikan tombol 'load more' untuk tab author list
+            const loadMoreFanartButton = document.querySelector('#loadMoreFanart')
+            if(targetId == 'tab4') {
+                loadMoreFanartButton.style.display = 'none'
+            } else {
+                loadMoreFanartButton.style.display = 'block'
+            }
         });
     });
+
+    // load fanart list
+    await createFanartList()
+    // load author dropdown list
+    setupAuthorDropdown();
+    // load author list
+    const authorListCount = document.querySelector('#authorListCount')
+    authorListCount.textContent = `author total: ${authorList.length}`
+    createAuthorList()
 });
 
 async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
@@ -146,8 +162,8 @@ function createFanartItem(container, fanartList) {
 function setupAuthorDropdown() {
     const dropdownBtn = document.getElementById('authorDropdownBtn');
     const dropdownContent = document.getElementById('authorDropdownContent');
-    const searchInput = document.getElementById('authorSearchInput'); 
-    const authorListContainer = document.getElementById('authorListContainer'); 
+    const searchInput = document.getElementById('authorSearchDropdown'); 
+    const authorListDropdown = document.getElementById('authorListDropdown'); 
 
     // Toggle (buka/tutup) dropdown saat tombol ditekan
     dropdownBtn.addEventListener('click', (event) => {
@@ -190,7 +206,7 @@ function setupAuthorDropdown() {
         labelItem.appendChild(document.createTextNode(`${data.author} (${data.count})`));
 
         // Masukkan label ke dalam konten dropdown
-        authorListContainer.appendChild(labelItem);
+        authorListDropdown.appendChild(labelItem);
     });
 
     // Logika search
@@ -199,7 +215,7 @@ function setupAuthorDropdown() {
         const filterTeks = event.target.value.toLowerCase();
         
         // Ambil semua elemen label (author-item)
-        const semuaAuthorItem = authorListContainer.getElementsByClassName('author-item');
+        const semuaAuthorItem = authorListDropdown.getElementsByClassName('author-item');
 
         // Looping untuk mengecek masing-masing nama author
         for (let i = 0; i < semuaAuthorItem.length; i++) {
@@ -233,14 +249,60 @@ function showFanartForSelectedAuthor() {
     const allFanartDiv = document.querySelectorAll('.fanart-item')
     for(let fanartDiv of allFanartDiv) {
         const fanartImg = fanartDiv.children.item(0)
+        // match author fanart on img title attr
         if(checkedAuthorList.length > 0 && checkedAuthorList.indexOf(fanartImg.title.replace('@','')) === -1) {
+            // hide fanart that not match author
             fanartDiv.classList.add('hide')
         } else if(checkedAuthorList.length === authorList.length) {
+            // reset all checkbox
             const allCheckbox = document.querySelectorAll('input[type="checkbox"]')
             for(let input of allCheckbox) input.checked = false
             fanartDiv.classList.remove('hide')
         } else {
+            // show fanart that match author
             fanartDiv.classList.remove('hide')
         }
     }
+}
+
+function createAuthorList() {
+    const authorContainer = document.querySelector('.author-container')
+    const authorSearchInput = document.querySelector('#authorSearchList')
+
+    // loop author list
+    authorList.forEach(v => {
+        // set element and data for author 
+        const authorItem = document.createElement('div')
+        const authorAnchor = document.createElement('a')
+        authorItem.classList.add('author-list-item')
+        authorAnchor.textContent = `${v.author}\nfanart: ${v.count}`
+        authorAnchor.onclick = () => openLinkNewTab(`https://x.com/${v.author}`)
+
+        // append element to container
+        authorItem.appendChild(authorAnchor)
+        authorContainer.appendChild(authorItem)
+    })
+
+    authorSearchInput.oninput = event => showMatchedAuthor(event)
+}
+
+function showMatchedAuthor(ev) {
+    const allAuthor = document.querySelectorAll('.author-list-item')
+    const searchValue = ev.target.value
+    const authorListFound = document.querySelector('#authorListFound')
+    let authorFoundCounter = 0
+
+    // loop all author
+    allAuthor.forEach(authorItem => {
+        const authorName = authorItem.textContent.split('\n')[0]
+        if(searchValue.length >= 3 && authorName.toLowerCase().match(searchValue)) {
+            authorItem.classList.remove('hide')
+            authorFoundCounter += 1
+        } else if(searchValue.length >= 3 && !authorName.toLowerCase().match(searchValue)) {
+            authorItem.classList.add('hide')
+        } else {
+            authorItem.classList.remove('hide')
+        }
+    })
+    authorListFound.textContent = `author found: ${authorFoundCounter}`
 }

@@ -6,6 +6,7 @@
     <title>Ekstensi Fanart</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/fanart.css">
+    <link rel="stylesheet" href="css/fanart-author.css">
 </head>
 <body>
 
@@ -15,13 +16,14 @@
             <button class="tab-btn active" data-target="tab1">Nice</button>
             <button class="tab-btn" data-target="tab2">Wow</button>
             <button class="tab-btn" data-target="tab3">YOOO</button>
+            <button class="tab-btn" data-target="tab4">Author List</button>
             <div class="dropdown-container">
                 <button id="authorDropdownBtn" class="dropdown-btn">😎</button>
                 <div id="authorDropdownContent" class="dropdown-content">
                     <div class="dropdown-search-container">
-                        <input type="text" id="authorSearchInput" placeholder="find author..." autocomplete="off">
+                        <input type="text" id="authorSearchDropdown" placeholder="find author..." autocomplete="off">
                     </div>
-                    <form id="authorListContainer"></form>
+                    <form id="authorListDropdown"></form>
                 </div>
             </div>
         </div>
@@ -37,6 +39,13 @@
             </div>
             <div id="tab3" class="tab-content">
                 <div class="fanart-container"></div>
+            </div>
+            <div id="tab4" class="tab-content">
+                <div class="author-container">
+                    <span id="authorListCount"></span>
+                    <input type="text" id="authorSearchList" placeholder="find author..." autocomplete="off">
+                    <span id="authorListFound"></span>
+                </div>
             </div>
             <button id="loadMoreFanart" class="fanart-load-more"> load more </button>
         </div>
