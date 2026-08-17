@@ -37,6 +37,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupAuthorDropdown();
     // load author list
     createAuthorList()
+    // open fanart in new tab
+    const openLinkAnchors = document.querySelectorAll('a');
+    openLinkAnchors.forEach(a => a.onclick = event => {
+        const url = event.currentTarget.href.split('#')[1]
+        openLinkNewTab(url)
+    })
 });
 
 async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
@@ -109,11 +115,10 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
 function createFanartItem(container, fanartList) {
     for(let fanart of fanartList) {
         const author = fanart.url.replace('https://', '').split('/')[1]
+        // find author to count fanart
         const findAuthor = authorList.map(v => v.author).indexOf(author)
-        if(findAuthor === -1)
-            authorList.push({author, count: 1})
-        else 
-            authorList[findAuthor].count += 1
+        if(findAuthor === -1) authorList.push({author, count: 1})
+        else authorList[findAuthor].count += 1
 
         // create fanart item
         const fanartDiv = document.createElement('div')
@@ -168,8 +173,6 @@ function setupAuthorDropdown(loadMoreStatus = false) {
         // Toggle (buka/tutup) dropdown saat tombol ditekan
         dropdownBtn.addEventListener('click', (event) => {
             event.stopPropagation(); // Mencegah klik menyebar ke window
-            console.log('dropdown click');
-            
             dropdownContent.classList.toggle('show');
 
             // Opsional: Langsung fokuskan kursor ke kolom search saat dropdown dibuka
@@ -179,6 +182,8 @@ function setupAuthorDropdown(loadMoreStatus = false) {
         });
     }
 
+    // Kosongkan dropdown list sebelum append element untuk menghindari duplikasi
+    authorListDropdown.textContent = ''
     // Generate list author menjadi checkbox
     authorList.forEach(data => {
         // Buat label sebagai container agar tulisan juga bisa diklik

@@ -22,28 +22,30 @@ async function loadSavedImages() {
 }
 
 // 2. Fungsi untuk menempelkan centang hijau ke gambar
-function markSavedImages(anchorElement) {
+function markSavedImages(articleElement) {
+    // Ambil anchor element untuk link ke tweet
+    const anchorElement = articleElement.querySelector('a[role=link][href*=status]')
     // Tunggu sampai img element di render
-    const imgElement = anchorElement.querySelector('img')
+    const imgContainer = articleElement.querySelector('div[data-testid="tweetPhoto"]')
+    if(!imgContainer) return
+    const imgElement = imgContainer.querySelector('img')
     if(!imgElement) return
 
     // Lewati jika gambar sudah pernah dicek agar performa tetap ringan
-    if (anchorElement.dataset.fanartChecked) return; 
-    anchorElement.dataset.fanartChecked = "true";
+    if (imgContainer.dataset.fanartChecked) return; 
+    imgContainer.dataset.fanartChecked = "true";
 
     // Normalisasi URL gambar yang ada di layar
     const cleanAnchorHref = anchorElement.href.replace(/\/photo\/\d|\/video\/\d/, '')
 
-    // memasukkan gambar ke Live Preview
-    addImageToLivePanel(imgElement, cleanAnchorHref);
+    // memasukkan gambar ke Live Preview saat ada di tab media
+    if(livePanel.style.display != 'none') addImageToLivePanel(imgElement, cleanAnchorHref);
     
     // Cek apakah URL gambar ini ada di dalam list yang sudah kita simpan
     if (savedImageUrls.find(v => v.match(cleanAnchorHref))) {
-        const parent = anchorElement.parentElement;
-        
-        // Pastikan parent relative agar centang (absolute) tidak lari ke mana-mana
-        if (window.getComputedStyle(parent).position === 'static') {
-            parent.style.position = 'relative'; 
+        // Pastikan img container relative agar centang (absolute) tidak lari ke mana-mana
+        if (window.getComputedStyle(imgContainer).position === 'static') {
+            imgContainer.style.position = 'relative'; 
         }
 
         // Buat elemen centang
@@ -52,7 +54,7 @@ function markSavedImages(anchorElement) {
         // Kamu bisa mengganti icon ini dengan <img> atau <svg> centang milikmu sendiri
         checkmark.textContent = '✅'; 
         
-        parent.appendChild(checkmark);
+        imgContainer.appendChild(checkmark);
     }
 }
 
@@ -74,7 +76,11 @@ const observer = new MutationObserver((mutations) => {
                 // } 
                 // Skenario B: Node yang ditambahkan adalah container (div) yang berisi <img> di dalamnya
                 if (node.querySelectorAll) {
-                    const imageAnchors = document.querySelectorAll('a[role="link"][href*="photo"], a[role="link"][href*="video"]');
+                    // ### ambil element article
+                    // ### untuk link tweet dari jam - a[role=link][href*=status]
+                    // ### untuk gambar dan checkmark ke element img + parentnya
+                    // const selector = `a[role="link"][href*="photo"], div[aria-label="Embedded video"]`
+                    const imageAnchors = document.querySelectorAll('article[data-testid="tweet"]');
                     imageAnchors.forEach(markSavedImages);
                 }
             }

@@ -1,27 +1,14 @@
 
 // Menunggu hingga seluruh DOM popup selesai dimuat
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     // check fanart token
     checkFanartToken()
     // check fanart limit
     fanartLimitWarning()
 
-    // ANCHOR ONCLICK EVENT
-    // ambil semua anchor element
-    const openLinkAnchors = document.querySelectorAll('a');
-    // cek tombol yang di klik
-    for(let anchor of openLinkAnchors) {
-        anchor.onclick = (event) => {
-            const url = event.currentTarget.href
-            const rawUrl = url.split('#')[1]
-            openLinkNewTab(rawUrl)
-        }
-    }
-
     // set fanart token
     const fanartTokenButton = document.querySelector('#setFanartToken')
     fanartTokenButton.onclick = () => setFanartToken()
-
     // notif
     const notifElement = document.querySelector('#notif')
     
@@ -181,10 +168,7 @@ function loadMoreFromRedisCommand(event) {
                     }
                 }
                 // update author dropdown
-                const authorListCount = document.querySelector('#authorListCount')
-                authorListCount.textContent = `author total: ${authorList.length}`
                 setupAuthorDropdown(true)
-                createAuthorList(true)
                 // response success
                 displayResponse(res, event, `load more (${res.loadMorePage})`)
             } else {
