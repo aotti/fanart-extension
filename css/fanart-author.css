@@ -97,7 +97,7 @@
 .author-header, .author-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+    gap: .5rem;
     font-size: medium;
 }
 
@@ -114,7 +114,6 @@
 
 .author-list-item {
     width: 100%;
-    padding: 4px;
     border: 1px solid white;
     text-align: center;
 }
@@ -122,7 +121,7 @@
 .author-list-item a {
     display: block;
     width: 100%;
-    padding: 4px;
+    padding: 2px;
     color: aquamarine;
     text-decoration: none;
     cursor: pointer;
