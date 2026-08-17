@@ -69,6 +69,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         setTimeout(() => notifElement.textContent = '', 3000);
     }
+    
+    // save author list button
+    const authorSaveButton = document.querySelector('.author-save-button')
+    authorSaveButton.onclick = () => {
+        saveToStorage('rawAuthorList', JSON.stringify(authorList))
+        notifElement.textContent = 'author list saved ✅'
+        setTimeout(() => notifElement.textContent = '', 3000);
+    }
 });
 
 async function updateFanartList(key, newFanartList) {
@@ -172,6 +180,11 @@ function loadMoreFromRedisCommand(event) {
                             break
                     }
                 }
+                // update author dropdown
+                const authorListCount = document.querySelector('#authorListCount')
+                authorListCount.textContent = `author total: ${authorList.length}`
+                setupAuthorDropdown(true)
+                createAuthorList(true)
                 // response success
                 displayResponse(res, event, `load more (${res.loadMorePage})`)
             } else {

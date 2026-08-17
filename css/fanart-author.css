@@ -57,6 +57,11 @@
     cursor: pointer;
 }
 
+.author-save-button {
+    display: block;
+    margin: 12px auto 0 auto;
+}
+
 /* Container search box agar menempel di bagian atas (sticky) */
 .dropdown-search-container {
     padding: 8px;
@@ -85,18 +90,22 @@
 }
 
 /* ======== AUTHOR LIST CONTAINER ======== */
-.author-container {
+.author-header {
+    margin-bottom: 1rem;
+}
+
+.author-header, .author-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     font-size: medium;
 }
 
-.author-container span {
+.author-header span {
     text-align: center;
 }
 
-.author-container input {
+.author-header input {
     width: 100%;
     height: 100%;
     grid-column: span 2;

@@ -36,8 +36,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // load author dropdown list
     setupAuthorDropdown();
     // load author list
-    const authorListCount = document.querySelector('#authorListCount')
-    authorListCount.textContent = `author total: ${authorList.length}`
     createAuthorList()
 });
 
@@ -159,22 +157,27 @@ function createFanartItem(container, fanartList) {
 }
 
 // Tambahkan fungsi ini untuk membuka dropdown
-function setupAuthorDropdown() {
+function setupAuthorDropdown(loadMoreStatus = false) {
     const dropdownBtn = document.getElementById('authorDropdownBtn');
     const dropdownContent = document.getElementById('authorDropdownContent');
     const searchInput = document.getElementById('authorSearchDropdown'); 
     const authorListDropdown = document.getElementById('authorListDropdown'); 
 
-    // Toggle (buka/tutup) dropdown saat tombol ditekan
-    dropdownBtn.addEventListener('click', (event) => {
-        event.stopPropagation(); // Mencegah klik menyebar ke window
-        dropdownContent.classList.toggle('show');
+    // Jangan tambah listener jika load more fanart
+    if(!loadMoreStatus) {
+        // Toggle (buka/tutup) dropdown saat tombol ditekan
+        dropdownBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Mencegah klik menyebar ke window
+            console.log('dropdown click');
+            
+            dropdownContent.classList.toggle('show');
 
-        // Opsional: Langsung fokuskan kursor ke kolom search saat dropdown dibuka
-        if (dropdownContent.classList.contains('show')) {
-            searchInput.focus();
-        }
-    });
+            // Opsional: Langsung fokuskan kursor ke kolom search saat dropdown dibuka
+            if (dropdownContent.classList.contains('show')) {
+                searchInput.focus();
+            }
+        });
+    }
 
     // Generate list author menjadi checkbox
     authorList.forEach(data => {
@@ -265,12 +268,16 @@ function showFanartForSelectedAuthor() {
     }
 }
 
-function createAuthorList() {
+async function createAuthorList() {
     const authorContainer = document.querySelector('.author-container')
     const authorSearchInput = document.querySelector('#authorSearchList')
+    const rawAuthorList = await getFromStorage('rawAuthorList')
+    const parsedAuthorList = rawAuthorList ? JSON.parse(rawAuthorList) : []
 
+    const authorListCount = document.querySelector('#authorListCount')
+    authorListCount.textContent = `author total: ${parsedAuthorList.length}`
     // loop author list
-    authorList.forEach(v => {
+    parsedAuthorList.forEach(v => {
         // set element and data for author 
         const authorItem = document.createElement('div')
         const authorAnchor = document.createElement('a')
