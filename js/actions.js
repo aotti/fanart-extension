@@ -3,8 +3,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // check fanart token
     checkFanartToken()
-    // check fanart limit
-    fanartLimitWarning()
 
     // set fanart token
     const fanartTokenButton = document.querySelector('#setFanartToken')
@@ -59,8 +57,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // save author list button
     const authorSaveButton = document.querySelector('.author-save-button')
-    authorSaveButton.onclick = () => {
-        saveToStorage('rawAuthorList', JSON.stringify(authorList))
+    authorSaveButton.onclick = async () => {
+        const rawAuthorList = await getFromStorage('rawAuthorList')
+        if(rawAuthorList) {
+            const parsedAuthorList = JSON.parse(rawAuthorList)
+            // author storage exist, update the list
+            for(let data of authorList) {
+                const findAuthor = parsedAuthorList.map(v => v.author).indexOf(data.author)
+                if(findAuthor === -1) {
+                    // author not exist, push
+                    parsedAuthorList.push({author: data.author, count: data.count})
+                } else {
+                    // author exist, only update counter if new data is bigger than stored data
+                    if(parsedAuthorList[findAuthor].count < data.count)
+                        parsedAuthorList[findAuthor].count = data.count
+                }
+            }
+            saveToStorage('rawAuthorList', JSON.stringify(parsedAuthorList))
+        } else {
+            // author storage empty
+            saveToStorage('rawAuthorList', JSON.stringify(authorList))
+        }
         notifElement.textContent = 'author list saved ✅'
         setTimeout(() => notifElement.textContent = '', 3000);
     }
@@ -316,13 +333,4 @@ function checkFanartToken() {
         const fanartTokenButton = document.querySelector('#setFanartToken')
         fanartTokenButton.textContent = 'set fanart token ✅'
     })
-}
-
-function fanartLimitWarning() {
-    if(fanartLimitCounter >= 1000) {
-        const fanartTabs = document.querySelectorAll('.tab-btn')
-        let fanartAmount = 0
-        fanartTabs.forEach(e => fanartAmount += +e.textContent.match(/\d+/)[0])
-        alert(`❗ ITS OVER 1000 FANARTS ❗ (${fanartAmount})`)
-    }
 }

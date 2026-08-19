@@ -33,54 +33,56 @@ function checkMediaTabVisibility() {
 }
 
 // 3. Fungsi Menambahkan Gambar ke Live Panel
-function addImageToLivePanel(imgElement, originalUrl) {
-    // Abaikan jika gambar bukan dari media Twitter (seperti ikon atau avatar)
-    if (!imgElement.src || !imgElement.src.includes('pbs.twimg.com/media')) return;
+function addImageToLivePanel(imgElements, originalUrl) {
+    imgElements.forEach(img => {
+        // Abaikan jika gambar bukan dari media Twitter (seperti ikon atau avatar)
+        if (!img.src || !img.src.includes('pbs.twimg.com/media')) return;
 
-    // Bersihkan URL: Gunakan ukuran 'small' untuk thumbnail di panel agar ringan di RAM
-    const thumbnailUrl = imgElement.src.replace(/name=.*/, 'name=360x360')
-    const zoomUrl = imgElement.src.replace(/name=.*/, 'name=small')
+        // Bersihkan URL: Gunakan ukuran 'small' untuk thumbnail di panel agar ringan di RAM
+        const thumbnailUrl = img.src.replace(/name=.*/, 'name=360x360')
+        const zoomUrl = img.src.replace(/name=.*/, 'name=small')
 
-    // Cek duplikasi di panel
-    if (addedLiveUrls.has(thumbnailUrl)) return;
-    addedLiveUrls.add(thumbnailUrl);
+        // Cek duplikasi di panel
+        if (addedLiveUrls.has(thumbnailUrl)) return;
+        addedLiveUrls.add(thumbnailUrl);
 
-    const gridItem = document.createElement('div');
-    gridItem.className = 'fanart-live-item';
+        const gridItem = document.createElement('div');
+        gridItem.className = 'fanart-live-item';
 
-    const gridImg = document.createElement('img');
-    gridImg.src = thumbnailUrl;
+        const gridImg = document.createElement('img');
+        gridImg.src = thumbnailUrl;
 
-    // --- TIMING LOGIC UNTUK SINGLE VS DOUBLE CLICK ---
-    let clickTimer = null;
+        // --- TIMING LOGIC UNTUK SINGLE VS DOUBLE CLICK ---
+        let clickTimer = null;
 
-    // Klik 1x: Tampilkan Zoom Preview
-    gridImg.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (clickTimer) clearTimeout(clickTimer);
-        
-        clickTimer = setTimeout(() => {
-            showZoomPreview(zoomUrl);
-        }, 200); // Wait 200ms to ensure it's not a double click
-    });
+        // Klik 1x: Tampilkan Zoom Preview
+        gridImg.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (clickTimer) clearTimeout(clickTimer);
+            
+            clickTimer = setTimeout(() => {
+                showZoomPreview(zoomUrl);
+            }, 200); // Wait 200ms to ensure it's not a double click
+        });
 
-    // Klik 2x (Double Click): Buka Link di Tab Baru
-    gridImg.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        if (clickTimer) clearTimeout(clickTimer); // Batal jalankan Zoom
-        
-        window.open(originalUrl, '_blank', 'noopener,noreferrer');
-    });
+        // Klik 2x (Double Click): Buka Link di Tab Baru
+        gridImg.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            if (clickTimer) clearTimeout(clickTimer); // Batal jalankan Zoom
+            
+            window.open(originalUrl, '_blank', 'noopener,noreferrer');
+        });
 
-    gridItem.appendChild(gridImg);
-    liveGridContainer.prepend(gridItem);
+        gridItem.appendChild(gridImg);
+        liveGridContainer.prepend(gridItem);
+    })
 
     // FITUR KEAMANAN MEMORI: Batasi grid maksimal 150 gambar agar browser tidak lag
     if (liveGridContainer.children.length > 150) {
-        const firstChild = liveGridContainer.firstElementChild;
-        const removedUrl = firstChild.querySelector('img').src;
+        const lastChild = liveGridContainer.lastElementChild;
+        const removedUrl = lastChild.querySelector('img').src;
         addedLiveUrls.delete(removedUrl);
-        liveGridContainer.removeChild(firstChild);
+        liveGridContainer.removeChild(lastChild);
     }
 }
 

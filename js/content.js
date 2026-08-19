@@ -26,26 +26,28 @@ function markSavedImages(articleElement) {
     // Ambil anchor element untuk link ke tweet
     const anchorElement = articleElement.querySelector('a[role=link][href*=status]')
     // Tunggu sampai img element di render
-    const imgContainer = articleElement.querySelector('div[data-testid="tweetPhoto"]')
-    if(!imgContainer) return
-    const imgElement = imgContainer.querySelector('img')
-    if(!imgElement) return
+    const imgContainers = articleElement.querySelectorAll('div[data-testid="tweetPhoto"]')
+    if(!imgContainers) return
+    const imgElements = articleElement.querySelectorAll('img')
+    if(!imgElements) return
 
     // Lewati jika gambar sudah pernah dicek agar performa tetap ringan
-    if (imgContainer.dataset.fanartChecked) return; 
-    imgContainer.dataset.fanartChecked = "true";
+    imgContainers.forEach(container => {
+        if(container.dataset.fanartChecked) return
+        container.dataset.fanartChecked = "true"
+    })
 
     // Normalisasi URL gambar yang ada di layar
     const cleanAnchorHref = anchorElement.href.replace(/\/photo\/\d|\/video\/\d/, '')
 
     // memasukkan gambar ke Live Preview saat ada di tab media
-    if(livePanel.style.display != 'none') addImageToLivePanel(imgElement, cleanAnchorHref);
+    if(livePanel.style.display != 'none') addImageToLivePanel(imgElements, cleanAnchorHref);
     
     // Cek apakah URL gambar ini ada di dalam list yang sudah kita simpan
     if (savedImageUrls.find(v => v.match(cleanAnchorHref))) {
         // Pastikan img container relative agar centang (absolute) tidak lari ke mana-mana
-        if (window.getComputedStyle(imgContainer).position === 'static') {
-            imgContainer.style.position = 'relative'; 
+        if (window.getComputedStyle(imgContainers[0]).position === 'static') {
+            imgContainers[0].style.position = 'relative'; 
         }
 
         // Buat elemen centang
@@ -54,7 +56,7 @@ function markSavedImages(articleElement) {
         // Kamu bisa mengganti icon ini dengan <img> atau <svg> centang milikmu sendiri
         checkmark.textContent = '✅'; 
         
-        imgContainer.appendChild(checkmark);
+        imgContainers[0].appendChild(checkmark);
     }
 }
 

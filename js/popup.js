@@ -43,7 +43,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         const url = event.currentTarget.href.split('#')[1]
         openLinkNewTab(url)
     })
+    // check fanart limit
+    fanartLimitWarning()
 });
+
+function fanartLimitWarning() {
+    if(fanartLimitCounter >= 1000) {
+        const fanartTabs = document.querySelectorAll('.tab-btn')
+        let fanartAmount = 0
+        fanartTabs.forEach(e => fanartAmount += +e.textContent.match(/\d+/)[0])
+        alert(`❗ ITS OVER 1000 FANARTS ❗ (${fanartAmount})`)
+    }
+}
 
 async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
     const fanartTabs = document.querySelectorAll('.tab-btn')
