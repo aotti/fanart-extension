@@ -52,3 +52,30 @@
     width: 100%;
     padding: .5rem 0;
 }
+
+.fanart-edit {
+    border: 0;
+    padding: 0;
+    background-color: inherit;
+    cursor: pointer;
+}
+
+.fanart-category {
+    position: relative;
+}
+
+.fanart-category:hover {
+    border: 2px solid orange;
+}
+
+.fanart-category::before {
+    position: absolute;
+    content: "";
+    top: 0;
+    left: 0;
+    width: 0; 
+    height: 0; 
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid orange; /* Change color and size here */
+}

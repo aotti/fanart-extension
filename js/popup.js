@@ -1,5 +1,8 @@
 const authorList = []
 const checkedAuthorList = []
+const categoryList = []
+const checkedCategoryList = []
+let openedDropdown = null
 let fanartLimitCounter = 0
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -33,8 +36,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // load fanart list
     await createFanartList()
-    // load author dropdown list
+    // load dropdown list
     setupAuthorDropdown();
+    setupCategoryDropdown()
     // load author list
     createAuthorList()
     // open fanart in new tab
@@ -63,6 +67,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
     if(loadMoreTab && loadMoreFanartList) {
         // for load more fanart
         if(loadMoreTab == 'tab1') {
+            // get .tab-content children
             const fanartContentNice = fanartContentList.item(0)
             await setFanartList(0, fanartContentNice)
         } else if(loadMoreTab == 'tab2') {
@@ -93,7 +98,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 // fanart count
                 fanartLimitCounter += fanartNiceList.length
                 fanartTabs[i].textContent += ` (${fanartNiceList.length})`
-                createFanartItem(fanartContent.children[0], fanartNiceList)
+                createFanartItem(i, fanartContent.children[0], fanartNiceList)
                 break
             case 'tab2':
                 const getWowData = await getFromStorage('saveFanartWow')
@@ -105,7 +110,7 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 // fanart count
                 fanartLimitCounter += fanartWowList.length
                 fanartTabs[i].textContent += ` (${fanartWowList.length})`
-                createFanartItem(fanartContent.children[0], fanartWowList)
+                createFanartItem(i, fanartContent.children[0], fanartWowList)
                 break
             case 'tab3':
                 const getYoooData = await getFromStorage('saveFanartYooo')
@@ -117,28 +122,40 @@ async function createFanartList(loadMoreTab = null, loadMoreFanartList = null) {
                 // fanart count
                 fanartLimitCounter += fanartYoooList.length
                 fanartTabs[i].textContent += ` (${fanartYoooList.length})`
-                createFanartItem(fanartContent.children[0], fanartYoooList)
+                createFanartItem(i, fanartContent.children[0], fanartYoooList)
                 break
         }
     }
 }
 
-function createFanartItem(container, fanartList) {
-    for(let fanart of fanartList) {
+function createFanartItem(i, container, fanartList) {
+    for(let j in fanartList) {
+        const fanart = fanartList[j]
         const author = fanart.url.replace('https://', '').split('/')[1]
-        // find author to count fanart
+        
+        // set author and count fanart
         const findAuthor = authorList.map(v => v.author).indexOf(author)
-        if(findAuthor === -1) authorList.push({author, count: 1})
-        else authorList[findAuthor].count += 1
+        findAuthor === -1
+            ? authorList.push({author, count: 1})
+            : authorList[findAuthor].count += 1
+        
+        // set category and count fanart
+        if(fanart?.category) {
+            const findCategory = categoryList.map(v => v.category).indexOf(fanart.category)
+            findCategory === -1
+                ? categoryList.push({category: fanart.category, count: 1})
+                : categoryList[findCategory].count += 1
+        }
 
         // create fanart item
         const fanartDiv = document.createElement('div')
         fanartDiv.classList.add('fanart-item')
+        fanart?.category ? fanartDiv.classList.add('fanart-category') : null
         // image 
         const fanartImg = document.createElement('img')
         fanartImg.src = fanart.img
         fanartImg.alt = 'fanart-img'
-        fanartImg.title = `@${author}`
+        fanartImg.title = fanart?.category ? `@${author}-${fanart.category}` : `@${author}-other`
         // fanartImg.height = 120
 
         // action div
@@ -158,10 +175,48 @@ function createFanartItem(container, fanartList) {
                 setTimeout(() => event.target.textContent = 'copy', 1000);
             })
         }
+        // edit
+        const fanartEdit = document.createElement('button')
+        fanartEdit.classList.add('fanart-edit')
+        fanartEdit.textContent = '📝'
+        fanartEdit.onclick = () => {
+            // set fanart category
+            const categoryListText = 'gi = GenshinImpact \n ba = BlueArchive \n zzz = ZenlessZoneZero \n wuwa = WutheringWaves \n hsr = HonkaiStarRail \n sr = StellaSora \n uma = Umamusume \n ark = Arknight \n 2hu = Touhou \n o = other'
+            const fanartType = i == 0 ? 'nice' : i == 1 ? 'wow' : 'yooo'
+            const inputCategory = prompt(` ---Editing @${author} art (${fanartType})---\n set category:\n ${categoryListText}`)
+            
+            // filter category
+            if(inputCategory && !filterFanartCategory(inputCategory)) return alert(`category ${inputCategory} not exist!`)
+            // match fanart list
+            switch(i) {
+                case 0:
+                    // edit fanart object
+                    const editedNiceFanart = {...fanart, category: inputCategory, timestamp: Date.now()}
+                    fanartList.splice(j, 1, editedNiceFanart)
+                    // save to local
+                    saveToStorage('saveFanartNice', JSON.stringify(fanartList))
+                    break
+                case 1:
+                    // edit fanart object
+                    const editedWowFanart = {...fanart, category: inputCategory, timestamp: Date.now()}
+                    fanartList.splice(j, 1, editedWowFanart)
+                    // save to local
+                    saveToStorage('saveFanartWow', JSON.stringify(fanartList))
+                    break
+                case 2:
+                    // edit fanart object
+                    const editedYoooFanart = {...fanart, category: inputCategory, timestamp: Date.now()}
+                    fanartList.splice(j, 1, editedYoooFanart)
+                    // save to local
+                    saveToStorage('saveFanartYooo', JSON.stringify(fanartList))
+                    break
+            }
+        }
 
         // append action elements
         fanartActionDiv.appendChild(fanartAnchor)
         fanartActionDiv.appendChild(fanartCopy)
+        fanartActionDiv.appendChild(fanartEdit)
 
         // append image and anchor to div
         fanartDiv.appendChild(fanartImg)
@@ -185,6 +240,7 @@ function setupAuthorDropdown(loadMoreStatus = false) {
         dropdownBtn.addEventListener('click', (event) => {
             event.stopPropagation(); // Mencegah klik menyebar ke window
             dropdownContent.classList.toggle('show');
+            openedDropdown = 'author'
 
             // Opsional: Langsung fokuskan kursor ke kolom search saat dropdown dibuka
             if (dropdownContent.classList.contains('show')) {
@@ -217,7 +273,7 @@ function setupAuthorDropdown(loadMoreStatus = false) {
                 checkedAuthorList.splice(findAuthor, 1)
             }
             // show fanart for selected author
-            showFanartForSelectedAuthor()
+            showFanartForSelectedAuthorOrCategory()
         });
 
         // Masukkan checkbox dan teks ke dalam label
@@ -263,23 +319,105 @@ function setupAuthorDropdown(loadMoreStatus = false) {
     });
 }
 
-function showFanartForSelectedAuthor() {
+function setupCategoryDropdown(loadMoreStatus = false) {
+    const categoryDropdownBtn = document.getElementById('categoryDropdownBtn');
+    const categoryDropdownContent = document.getElementById('categoryDropdownContent');
+    const categoryListDropdown = document.getElementById('categoryListDropdown'); 
+
+    // Jangan tambah listener jika load more fanart
+    if(!loadMoreStatus) {
+        // Toggle (buka/tutup) dropdown saat tombol ditekan
+        categoryDropdownBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Mencegah klik menyebar ke window
+            categoryDropdownContent.classList.toggle('show');
+            openedDropdown = 'category'
+        });
+    }
+
+    categoryList.forEach(data => {
+        // Buat label sebagai container agar tulisan juga bisa diklik
+        const labelItem = document.createElement('label');
+        labelItem.classList.add('author-item'); // pakai class yg sama aja
+
+        // Buat checkbox
+        const checkboxItem = document.createElement('input');
+        checkboxItem.type = 'checkbox';
+        checkboxItem.value = data.category;
+
+        // Tangkap event ketika checkbox dicentang/dihilangkan
+        checkboxItem.addEventListener('change', event => {
+            const isChecked = event.target.checked;
+            const category = event.target.value;
+            // Nanti Anda bisa menambahkan logika filter gambar di sini
+            if(isChecked) checkedCategoryList.push(category)
+            else {
+                const findCategory = checkedCategoryList.indexOf(category)
+                checkedCategoryList.splice(findCategory, 1)
+            }
+            // show fanart for selected category
+            showFanartForSelectedAuthorOrCategory()
+        });
+
+        // Masukkan checkbox dan teks ke dalam label
+        labelItem.appendChild(checkboxItem);
+        labelItem.appendChild(document.createTextNode(`${filterFanartCategory(data.category)} (${data.count})`));
+
+        // Masukkan label ke dalam konten dropdown
+        categoryListDropdown.appendChild(labelItem);
+    })
+}
+
+function filterFanartCategory(inputCategory) {
+    switch(inputCategory) {
+        case 'gi': return 'GenshinImpact';
+        case 'ba': return 'BlueArchive';
+        case 'zzz': return 'ZenlessZoneZero';
+        case 'wuwa': return 'WutheringWaves';
+        case 'sr': return 'StellaSora';
+        case 'ark': return 'Arknight';
+        case 'hsr': return 'HonkaiStarRail';
+        case 'uma': return 'Umamusume';
+        case '2hu': return 'Touhou';
+        case 'o': return 'Other';
+        default: return null;
+    }
+}
+
+function showFanartForSelectedAuthorOrCategory() {
     // get all img elements
     const allFanartDiv = document.querySelectorAll('.fanart-item')
     for(let fanartDiv of allFanartDiv) {
         const fanartImg = fanartDiv.children.item(0)
-        // match author fanart on img title attr
-        if(checkedAuthorList.length > 0 && checkedAuthorList.indexOf(fanartImg.title.replace('@','')) === -1) {
-            // hide fanart that not match author
-            fanartDiv.classList.add('hide')
-        } else if(checkedAuthorList.length === authorList.length) {
-            // reset all checkbox
-            const allCheckbox = document.querySelectorAll('input[type="checkbox"]')
-            for(let input of allCheckbox) input.checked = false
-            fanartDiv.classList.remove('hide')
-        } else {
-            // show fanart that match author
-            fanartDiv.classList.remove('hide')
+        const [imgAuthor, imgCategory] = fanartImg.title.split('-')
+        
+        if(openedDropdown == 'author') {
+            // match author fanart on img title attr
+            if(checkedAuthorList.length > 0 && checkedAuthorList.indexOf(imgAuthor.replace('@','')) === -1) {
+                // hide fanart that not match author
+                fanartDiv.classList.add('hide')
+            } else if(checkedAuthorList.length === authorList.length) {
+                // reset all checkbox
+                const allCheckbox = document.querySelectorAll('input[type="checkbox"]')
+                for(let input of allCheckbox) input.checked = false
+                fanartDiv.classList.remove('hide')
+            } else {
+                // show fanart that match author
+                fanartDiv.classList.remove('hide')
+            }
+        } else if(openedDropdown == 'category') {
+            // match author fanart on img title attr
+            if(checkedCategoryList.length > 0 && checkedCategoryList.indexOf(imgCategory) === -1) {
+                // hide fanart that not match author
+                fanartDiv.classList.add('hide')
+            } else if(checkedCategoryList.length === categoryList.length) {
+                // reset all checkbox
+                const allCheckbox = document.querySelectorAll('input[type="checkbox"]')
+                for(let input of allCheckbox) input.checked = false
+                fanartDiv.classList.remove('hide')
+            } else {
+                // show fanart that match author
+                fanartDiv.classList.remove('hide')
+            }
         }
     }
 }

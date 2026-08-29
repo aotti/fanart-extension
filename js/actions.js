@@ -186,6 +186,7 @@ function loadMoreFromRedisCommand(event) {
                 }
                 // update author dropdown
                 setupAuthorDropdown(true)
+                setupCategoryDropdown(true)
                 // response success
                 displayResponse(res, event, `load more (${res.loadMorePage})`)
             } else {
